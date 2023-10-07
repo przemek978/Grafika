@@ -274,12 +274,26 @@ namespace Grafika.Views
             }
             else if (isDragging && currentShape != null)
             {
-                double offsetX = endPoint.X - startPoint.X;
-                double offsetY = endPoint.Y - startPoint.Y;
+                if (currentShape is Line line)
+                {
+                    double offsetX = endPoint.X - startPoint.X;
+                    double offsetY = endPoint.Y - startPoint.Y;
 
-                Canvas.SetLeft(currentShape, Canvas.GetLeft(currentShape) + offsetX);
-                Canvas.SetTop(currentShape, Canvas.GetTop(currentShape) + offsetY);
+                    // Przesuń obie współrzędne punktów początkowego i końcowego linii o odpowiednie przesunięcie.
+                    line.X1 += offsetX;
+                    line.Y1 += offsetY;
+                    line.X2 += offsetX;
+                    line.Y2 += offsetY;
+                }
+                else
+                {
+                    double offsetX = endPoint.X - startPoint.X;
+                    double offsetY = endPoint.Y - startPoint.Y;
 
+                    Canvas.SetLeft(currentShape, Canvas.GetLeft(currentShape) + offsetX);
+                    Canvas.SetTop(currentShape, Canvas.GetTop(currentShape) + offsetY);
+
+                }
                 startPoint = endPoint;
             }
             else if (isResizing && currentShape != null)
@@ -334,7 +348,7 @@ namespace Grafika.Views
                 {
                     newWidth = endPoint.X - Canvas.GetLeft(currentShape);
                 }
-                else if(resizeDirection == ResizeDirection.Ellipse)
+                else if (resizeDirection == ResizeDirection.Ellipse)
                 {
                     if (currentShape is Ellipse ellipse)
                     {
@@ -352,54 +366,7 @@ namespace Grafika.Views
                     }
                 }
 
-                //else if (resizeDirection == ResizeDirection.Top)
-                //{
-                //    newTop = endPoint.Y;
-                //    newHeight = Canvas.GetTop(currentShape) + currentShape.Height - endPoint.Y;
-                //}
-                //else if (resizeDirection == ResizeDirection.Bottom)
-                //{
-                //    newHeight = endPoint.Y - Canvas.GetTop(currentShape);
-                //}
-                //else if (resizeDirection == ResizeDirection.Left)
-                //{
-                //    newLeft = endPoint.X;
-                //    newWidth = Canvas.GetLeft(currentShape) + currentShape.Width - endPoint.X;
-                //}
-                //else if (resizeDirection == ResizeDirection.Right)
-                //{
-                //    newWidth = endPoint.X - Canvas.GetLeft(currentShape);
-                //}
-
-                //if (resizeDirection == ResizeDirection.Top)
-                //{
-                //    newTop += offsetY;
-                //    newHeight -= offsetY;
-                //}
-                //else if (resizeDirection == ResizeDirection.Bottom)
-                //{
-                //    newHeight += offsetY;
-                //}
-                //else if (resizeDirection == ResizeDirection.Left)
-                //{
-                //    newLeft += offsetX;
-                //    newWidth -= offsetX;
-                //}
-                //else if (resizeDirection == ResizeDirection.Right)
-                //{
-                //    newWidth += offsetX;
-                //}
-
-                //if (currentShape is Ellipse ellipse)
-                //{
-                //    double newDiameter = newWidth;
-
-                //    Canvas.SetLeft(ellipse, newLeft);
-                //    Canvas.SetTop(ellipse, newTop);
-                //    ellipse.Width = newDiameter;
-                //    ellipse.Height = newDiameter;
-                //}
-                else if (currentShape is Rectangle rectangle)
+                if (currentShape is Rectangle rectangle)
                 {
                     if (newWidth >= 0 && newHeight >= 0)
                     {

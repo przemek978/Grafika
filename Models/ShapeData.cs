@@ -16,13 +16,13 @@ namespace Grafika.Models
         [Serializable]
         public class ShapeData
         {
-            public double X { get; set; } // Pozycja X
-            public double Y { get; set; } // Pozycja Y
-            public double Width { get; set; } // Szerokość
-            public double Height { get; set; } // Wysokość
-            public string FillColor { get; set; } // Kolor wypełnienia w formie ciągu tekstowego, np. "#FF0000" dla czerwonego
-            public string StrokeColor { get; set; } // Kolor obrysu w formie ciągu tekstowego, np. "#000000" dla czarnego
-            public double StrokeThickness { get; set; } // Grubość obrysu
+            public double X { get; set; }
+            public double Y { get; set; }
+            public double Width { get; set; } 
+            public double Height { get; set; }
+            public string FillColor { get; set; }
+            public string StrokeColor { get; set; } 
+            public double StrokeThickness { get; set; }
 
             public ShapeData()
             {

@@ -35,9 +35,6 @@ namespace Grafika.Views
         public CanvasView()
         {
             InitializeComponent();
-            //var color = SystemParameters.WindowGlassColor;
-            //Color newColor = System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
-            //this.Background = new SolidColorBrush(newColor);
             this.WindowState = WindowState.Maximized;
         }
         private void ShapeRadioButton_Checked(object sender, RoutedEventArgs e)
@@ -121,6 +118,7 @@ namespace Grafika.Views
             rectangle.Width = width;
             rectangle.Height = height;
             rectangle.Stroke = Brushes.Black;
+            rectangle.Fill = Brushes.Green;
             Canvas.SetLeft(rectangle, x);
             Canvas.SetTop(rectangle, y);
             shapes.Add(rectangle);
@@ -133,6 +131,7 @@ namespace Grafika.Views
             circle.Width = diameter;
             circle.Height = diameter;
             circle.Stroke = Brushes.Black;
+            circle.Fill = Brushes.Blue;
             Canvas.SetLeft(circle, x);
             Canvas.SetTop(circle, y);
             shapes.Add(circle);
@@ -162,12 +161,10 @@ namespace Grafika.Views
                 {
                     isResizing = true;
                     isDragging = false;
-                    // Sprawdź, czy kliknięto w lewy róg
                     if (IsPointNearLeftEdge(startPoint, currentShape))
                     {
                         resizeDirection = ResizeDirection.TopLeft;
                     }
-                    // Sprawdź, czy kliknięto w prawy róg
                     else if (IsPointNearRightEdge(startPoint, currentShape))
                     {
                         resizeDirection = ResizeDirection.TopRight;
@@ -177,17 +174,14 @@ namespace Grafika.Views
                         resizeDirection = ResizeDirection.Top;
                     }
                 }
-                // Sprawdź, czy kliknięto w dolną krawędź
                 else if (IsPointNearBottomEdge(startPoint, currentShape))
                 {
                     isResizing = true;
                     isDragging = false;
-                    // Sprawdź, czy kliknięto w lewy dolny róg
                     if (IsPointNearLeftEdge(startPoint, currentShape))
                     {
                         resizeDirection = ResizeDirection.BottomLeft;
                     }
-                    // Sprawdź, czy kliknięto w prawy dolny róg
                     else if (IsPointNearRightEdge(startPoint, currentShape))
                     {
                         resizeDirection = ResizeDirection.BottomRight;
@@ -197,14 +191,12 @@ namespace Grafika.Views
                         resizeDirection = ResizeDirection.Bottom;
                     }
                 }
-                // Sprawdź, czy kliknięto w lewą krawędź
                 else if (IsPointNearLeftEdge(startPoint, currentShape))
                 {
                     isResizing = true;
                     isDragging = false;
                     resizeDirection = ResizeDirection.Left;
                 }
-                // Sprawdź, czy kliknięto w prawą krawędź
                 else if (IsPointNearRightEdge(startPoint, currentShape))
                 {
                     isResizing = true;
@@ -218,6 +210,7 @@ namespace Grafika.Views
             {
                 isDrawing = true;
                 isDragging = false;
+                isResizing = false;
             }
 
         }
@@ -247,6 +240,7 @@ namespace Grafika.Views
                         {
                             currentShape = new Rectangle();
                             currentShape.Stroke = Brushes.Black;
+                            currentShape.Fill = Brushes.Green;
                             shapes.Add(currentShape);
                             canvas.Children.Add(currentShape);
                         }
@@ -260,6 +254,7 @@ namespace Grafika.Views
                         {
                             currentShape = new Ellipse();
                             currentShape.Stroke = Brushes.Black;
+                            currentShape.Fill = Brushes.Blue;
                             shapes.Add(currentShape);
                             canvas.Children.Add(currentShape);
                         }
@@ -279,7 +274,6 @@ namespace Grafika.Views
                     double offsetX = endPoint.X - startPoint.X;
                     double offsetY = endPoint.Y - startPoint.Y;
 
-                    // Przesuń obie współrzędne punktów początkowego i końcowego linii o odpowiednie przesunięcie.
                     line.X1 += offsetX;
                     line.Y1 += offsetY;
                     line.X2 += offsetX;
@@ -303,7 +297,7 @@ namespace Grafika.Views
                 double newWidth = currentShape.Width;
                 double newHeight = currentShape.Height;
 
-                double offsetX = (endPoint.X - startPoint.X) * 0.01; // Zmniejsz prędkość jeszcze bardziej.
+                double offsetX = (endPoint.X - startPoint.X) * 0.01;
                 double offsetY = (endPoint.Y - startPoint.Y) * 0.01;
 
                 if (resizeDirection == ResizeDirection.TopLeft)
@@ -355,10 +349,8 @@ namespace Grafika.Views
                         double centerX = Canvas.GetLeft(ellipse) + ellipse.Width / 2;
                         double centerY = Canvas.GetTop(ellipse) + ellipse.Height / 2;
 
-                        // Oblicz nowy promień elipsy na podstawie odległości między punktem a środkiem elipsy.
                         double newRadius = Math.Max(Math.Abs(endPoint.X - centerX), Math.Abs(endPoint.Y - centerY));
 
-                        // Ustaw nowe wartości dla elipsy, zapewniając, że szerokość i wysokość są równe.
                         Canvas.SetLeft(ellipse, centerX - newRadius);
                         Canvas.SetTop(ellipse, centerY - newRadius);
                         ellipse.Width = 2 * newRadius;
@@ -398,6 +390,8 @@ namespace Grafika.Views
             isDrawing = false;
             isDragging = false;
             isResizing = false;
+            currentShape = GetShapeUnderMouse(startPoint);
+            PopulateEditFields(currentShape);
         }
 
         private void Canvas_KeyDown(object sender, KeyEventArgs e)
@@ -425,7 +419,6 @@ namespace Grafika.Views
 
                 if (Keyboard.IsKeyDown(Key.LeftShift))
                 {
-                    // Skalowanie kształtu przy wciśniętym Shift
                     if (e.Key == Key.Up || e.Key == Key.Down)
                     {
                         currentShape.Height += offsetY;
@@ -437,7 +430,6 @@ namespace Grafika.Views
                 }
                 else
                 {
-                    // Przesuwanie kształtu
                     Canvas.SetLeft(currentShape, Canvas.GetLeft(currentShape) + offsetX);
                     Canvas.SetTop(currentShape, Canvas.GetTop(currentShape) + offsetY);
                 }
@@ -464,7 +456,10 @@ namespace Grafika.Views
                             X1 = line.X1,
                             Y1 = line.Y1,
                             X2 = line.X2,
-                            Y2 = line.Y2
+                            Y2 = line.Y2,
+                            FillColor = line.Fill.ToString(),
+                            StrokeColor = line.Stroke.ToString(),
+                            StrokeThickness = line.StrokeThickness,
                         });
                     }
                     else if (shape is Rectangle)
@@ -475,7 +470,10 @@ namespace Grafika.Views
                             X = Canvas.GetLeft(rectangle),
                             Y = Canvas.GetTop(rectangle),
                             Width = rectangle.Width,
-                            Height = rectangle.Height
+                            Height = rectangle.Height,
+                            FillColor = rectangle.Fill.ToString(),
+                            StrokeColor = rectangle.Stroke.ToString(),
+                            StrokeThickness = rectangle.StrokeThickness,
                         });
                     }
                     else if (shape is Ellipse)
@@ -485,7 +483,10 @@ namespace Grafika.Views
                         {
                             X = Canvas.GetLeft(ellipse),
                             Y = Canvas.GetTop(ellipse),
-                            Diameter = ellipse.Width
+                            Diameter = ellipse.Width,
+                            FillColor = ellipse.Fill.ToString(),
+                            StrokeColor = ellipse.Stroke.ToString(),
+                            StrokeThickness = ellipse.StrokeThickness,
                         });
                     }
                 }
@@ -566,26 +567,36 @@ namespace Grafika.Views
 
         private void PopulateEditFields(Shape selectedShape)
         {
-            if (selectedShape is Line line)
+            if (selectedShape != null)
             {
-                XTextBox.Text = line.X1.ToString();
-                YTextBox.Text = line.Y1.ToString();
-                SizeTextBox1.Text = line.X2.ToString();
-                SizeTextBox2.Text = line.Y2.ToString();
+                if (selectedShape is Line line)
+                {
+                    XTextBox.Text = line.X1.ToString();
+                    YTextBox.Text = line.Y1.ToString();
+                    SizeTextBox1.Text = line.X2.ToString();
+                    SizeTextBox2.Text = line.Y2.ToString();
+                }
+                else if (selectedShape is Rectangle rectangle)
+                {
+                    XTextBox.Text = Canvas.GetLeft(rectangle).ToString();
+                    YTextBox.Text = Canvas.GetTop(rectangle).ToString();
+                    SizeTextBox1.Text = rectangle.Width.ToString();
+                    SizeTextBox2.Text = rectangle.Height.ToString();
+                }
+                else if (selectedShape is Ellipse ellipse)
+                {
+                    XTextBox.Text = Canvas.GetLeft(ellipse).ToString();
+                    YTextBox.Text = Canvas.GetTop(ellipse).ToString();
+                    SizeTextBox1.Text = ellipse.Width.ToString();
+                    SizeTextBox2.Text = ellipse.Height.ToString();
+                }
             }
-            else if (selectedShape is Rectangle rectangle)
+            else
             {
-                XTextBox.Text = Canvas.GetLeft(rectangle).ToString();
-                YTextBox.Text = Canvas.GetTop(rectangle).ToString();
-                SizeTextBox1.Text = rectangle.Width.ToString();
-                SizeTextBox2.Text = rectangle.Height.ToString();
-            }
-            else if (selectedShape is Ellipse ellipse)
-            {
-                XTextBox.Text = Canvas.GetLeft(ellipse).ToString();
-                YTextBox.Text = Canvas.GetTop(ellipse).ToString();
-                SizeTextBox1.Text = ellipse.Width.ToString();
-                SizeTextBox2.Text = ellipse.Height.ToString();
+                XTextBox.Text = "";
+                YTextBox.Text = "";
+                SizeTextBox1.Text = "";
+                SizeTextBox2.Text = "";
             }
         }
 
@@ -604,7 +615,6 @@ namespace Grafika.Views
 
         private bool IsPointInsideRectangle(Point point, Rectangle rectangle)
         {
-            // Sprawdzamy, czy punkt jest wewnątrz prostokąta
             double left = Canvas.GetLeft(rectangle);
             double top = Canvas.GetTop(rectangle);
             double right = left + rectangle.Width;
@@ -615,7 +625,6 @@ namespace Grafika.Views
 
         private bool IsPointNearLine(Point point, Line line)
         {
-            // Sprawdzamy, czy punkt jest w pobliżu linii (na odległość 5 pikseli)
             double x1 = line.X1;
             double y1 = line.Y1;
             double x2 = line.X2;
@@ -632,20 +641,11 @@ namespace Grafika.Views
             if (shape is Rectangle rectangle)
             {
                 double top = Canvas.GetTop(rectangle);
-                double margin = 5; // Margines na krawędziach.
+                double margin = 5;
 
                 return point.Y >= top - margin && point.Y <= top + margin;
             }
-            //else if (shape is Ellipse ellipse)
-            //{
-            //    double centerY = Canvas.GetTop(ellipse) + ellipse.Height / 2;
-            //    double radiusY = ellipse.Height / 2;
-            //    double distance = Math.Abs(point.Y - centerY);
 
-            //    return distance <= radiusY + 5; // Margines na krawędziach.
-            //}
-
-            // Dla innych typów kształtów możesz dodać odpowiednią obsługę.
             return false;
         }
 
@@ -655,20 +655,11 @@ namespace Grafika.Views
             {
                 double top = Canvas.GetTop(rectangle);
                 double bottom = top + rectangle.Height;
-                double margin = 5; // Margines na krawędziach.
+                double margin = 5;
 
                 return point.Y >= bottom - margin && point.Y <= bottom + margin;
             }
-            //else if (shape is Ellipse ellipse)
-            //{
-            //    double centerY = Canvas.GetTop(ellipse) + ellipse.Height / 2;
-            //    double radiusY = ellipse.Height / 2;
-            //    double distance = Math.Abs(point.Y - centerY);
 
-            //    return distance <= radiusY + 5; // Margines na krawędziach.
-            //}
-
-            // Dla innych typów kształtów możesz dodać odpowiednią obsługę.
             return false;
         }
 
@@ -677,27 +668,18 @@ namespace Grafika.Views
             if (shape is Rectangle rectangle)
             {
                 double left = Canvas.GetLeft(rectangle);
-                double margin = 5; // Margines na krawędziach.
+                double margin = 5;
 
                 return point.X >= left - margin && point.X <= left + margin;
             }
-            //else if (shape is Ellipse ellipse)
-            //{
-            //    double centerX = Canvas.GetLeft(ellipse) + ellipse.Width / 2;
-            //    double radiusX = ellipse.Width / 2;
-            //    double distance = Math.Abs(point.X - centerX);
-
-            //    return distance <= radiusX + 5; // Margines na krawędziach.
-            //}
             else if (shape is Line line)
             {
                 double minX = Math.Min(line.X1, line.X2);
-                double margin = 5; // Margines na krawędziach.
+                double margin = 5;
 
                 return point.X >= minX - margin && point.X <= minX + margin;
             }
 
-            // Dla innych typów kształtów możesz dodać odpowiednią obsługę.
             return false;
         }
 
@@ -711,14 +693,6 @@ namespace Grafika.Views
 
                 return point.X >= right - margin && point.X <= right + margin;
             }
-            //else if (shape is Ellipse ellipse)
-            //{
-            //    double centerX = Canvas.GetLeft(ellipse) + ellipse.Width / 2;
-            //    double radiusX = ellipse.Width / 2;
-            //    double distance = Math.Abs(point.X - centerX);
-
-            //    return distance <= radiusX + 5; // Margines na krawędziach.
-            //}
             else if (shape is Line line)
             {
                 double maxX = Math.Max(line.X1, line.X2);
@@ -727,7 +701,6 @@ namespace Grafika.Views
                 return point.X >= maxX - margin && point.X <= maxX + margin;
             }
 
-            // Dla innych typów kształtów możesz dodać odpowiednią obsługę.
             return false;
         }
         private bool IsPointOnEllipseEdge(Point point, Shape shape)
@@ -738,21 +711,19 @@ namespace Grafika.Views
                 double centerY = Canvas.GetTop(ellipse) + ellipse.Height / 2;
                 double radius = ellipse.Width / 2;
 
-                // Oblicz odległość punktu od środka elipsy.
                 double distance = Math.Sqrt(Math.Pow(point.X - centerX, 2) + Math.Pow(point.Y - centerY, 2));
 
-                double margin = 5; // Margines na krawędziach.
+                double margin = 5;
 
-                // Jeśli odległość jest bliska średnicy plus minus 5, to zwróć true.
                 return Math.Abs(distance - radius) <= margin;
             }
 
             return false;
         }
 
-
         /////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        ////Inne/////////////////////////////////////////////////////////////////////////////////////////////
         private void ClearButton_Click(object sender, RoutedEventArgs e)
         {
             canvas.Children.Clear();
@@ -765,35 +736,39 @@ namespace Grafika.Views
 
         private void EditButton_Click(object sender, RoutedEventArgs e)
         {
-            // Sprawdź, czy aktualnie jest wybrany jakiś kształt
             if (currentShape != null)
             {
-                // Spróbuj pobrać wartości X, Y, S1 i S2 z TextBoxów
-                if (double.TryParse(XTextBox.Text, out double x) &&
-                    double.TryParse(YTextBox.Text, out double y) &&
-                    double.TryParse(SizeTextBox1.Text, out double s1) &&
-                    double.TryParse(SizeTextBox2.Text, out double s2))
+                try
                 {
-                    // Edytuj właściwości kształtu na podstawie wprowadzonych wartości
-                    Canvas.SetLeft(currentShape, x);
-                    Canvas.SetTop(currentShape, y);
+                    if (double.TryParse(XTextBox.Text, out double x) &&
+                        double.TryParse(YTextBox.Text, out double y) &&
+                        double.TryParse(SizeTextBox1.Text, out double s1) &&
+                        double.TryParse(SizeTextBox2.Text, out double s2))
+                    {
+                        Canvas.SetLeft(currentShape, x);
+                        Canvas.SetTop(currentShape, y);
 
-                    // W zależności od wybranego kształtu, możesz dostosować dodatkowe właściwości
-                    if (currentShape is Rectangle rectangle)
-                    {
-                        rectangle.Width = s1;
-                        rectangle.Height = s2;
-                    }
-                    else if (currentShape is Ellipse ellipse)
-                    {
-                        ellipse.Width = s1;
-                        ellipse.Height = s2;
+                        if (currentShape is Rectangle rectangle)
+                        {
+                            rectangle.Width = s1;
+                            rectangle.Height = s2;
+                        }
+                        else if (currentShape is Ellipse ellipse)
+                        {
+                            ellipse.Width = s1;
+                            ellipse.Height = s2;
+                        }
+                        else if (currentShape is Line line)
+                        {
+                            line.Width = s1;
+                            line.Height = s2;
+                        }
                     }
                 }
-                // Jeśli nie udało się sparsować wartości, możesz obsłużyć błąd lub wyświetlić komunikat użytkownikowi.
-                else
+                catch (Exception ex)
                 {
                     MessageBox.Show("Nieprawidłowe wartości wprowadzone do edycji kształtu.");
+
                 }
             }
         }

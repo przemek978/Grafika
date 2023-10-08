@@ -2,14 +2,18 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Style TargetType="Shape">
         <Setter Property="StrokeThickness" Value="5" />
+        <!--<Setter Property="Fill" Value="Blue" />-->
     </Style>
     <Style TargetType="Line">
         <Setter Property="StrokeThickness" Value="5" />
+        <Setter Property="Stroke" Value="Black" />
     </Style>
     <Style TargetType="Rectangle">
         <Setter Property="StrokeThickness" Value="5" />
+        <!--<Setter Property="Fill" Value="Red" />-->
     </Style>
     <Style TargetType="Ellipse">
         <Setter Property="StrokeThickness" Value="5" />
+        <!--<Setter Property="Fill" Value="Green" />-->
     </Style>
 </ResourceDictionary>

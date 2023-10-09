@@ -457,9 +457,6 @@ namespace Grafika.Views
                             Y1 = line.Y1,
                             X2 = line.X2,
                             Y2 = line.Y2,
-                            FillColor = line.Fill.ToString(),
-                            StrokeColor = line.Stroke.ToString(),
-                            StrokeThickness = line.StrokeThickness,
                         });
                     }
                     else if (shape is Rectangle)
@@ -471,9 +468,6 @@ namespace Grafika.Views
                             Y = Canvas.GetTop(rectangle),
                             Width = rectangle.Width,
                             Height = rectangle.Height,
-                            FillColor = rectangle.Fill.ToString(),
-                            StrokeColor = rectangle.Stroke.ToString(),
-                            StrokeThickness = rectangle.StrokeThickness,
                         });
                     }
                     else if (shape is Ellipse)
@@ -484,9 +478,9 @@ namespace Grafika.Views
                             X = Canvas.GetLeft(ellipse),
                             Y = Canvas.GetTop(ellipse),
                             Diameter = ellipse.Width,
-                            FillColor = ellipse.Fill.ToString(),
-                            StrokeColor = ellipse.Stroke.ToString(),
-                            StrokeThickness = ellipse.StrokeThickness,
+                            //FillColor = ellipse.Fill.ToString(),
+                            //StrokeColor = ellipse.Stroke.ToString(),
+                            //StrokeThickness = ellipse.StrokeThickness,
                         });
                     }
                 }
@@ -571,24 +565,36 @@ namespace Grafika.Views
             {
                 if (selectedShape is Line line)
                 {
-                    XTextBox.Text = line.X1.ToString();
-                    YTextBox.Text = line.Y1.ToString();
-                    SizeTextBox1.Text = line.X2.ToString();
-                    SizeTextBox2.Text = line.Y2.ToString();
+                    XEditTextBox.Text = line.X1.ToString();
+                    YEditTextBox.Text = line.Y1.ToString();
+                    SizeEditTextBox1.Text = line.X2.ToString();
+                    SizeEditTextBox2.Text = line.Y2.ToString();
+                    XEditLabel.Content = "X1";
+                    YEditLabel.Content = "Y1";
+                    SizeEditLabel1.Content = "X2";
+                    SizeEditLabel2.Content = "Y2";
                 }
                 else if (selectedShape is Rectangle rectangle)
                 {
-                    XTextBox.Text = Canvas.GetLeft(rectangle).ToString();
-                    YTextBox.Text = Canvas.GetTop(rectangle).ToString();
-                    SizeTextBox1.Text = rectangle.Width.ToString();
-                    SizeTextBox2.Text = rectangle.Height.ToString();
+                    XEditTextBox.Text = Canvas.GetLeft(rectangle).ToString();
+                    YEditTextBox.Text = Canvas.GetTop(rectangle).ToString();
+                    SizeEditTextBox1.Text = rectangle.Width.ToString();
+                    SizeEditTextBox2.Text = rectangle.Height.ToString();
+                    XEditLabel.Content = "X";
+                    YEditLabel.Content = "Y";
+                    SizeEditLabel1.Content = "Szerokość";
+                    SizeEditLabel2.Content = "Wysokość";
                 }
                 else if (selectedShape is Ellipse ellipse)
                 {
-                    XTextBox.Text = Canvas.GetLeft(ellipse).ToString();
-                    YTextBox.Text = Canvas.GetTop(ellipse).ToString();
-                    SizeTextBox1.Text = ellipse.Width.ToString();
-                    SizeTextBox2.Text = ellipse.Height.ToString();
+                    XEditTextBox.Text = Canvas.GetLeft(ellipse).ToString();
+                    YEditTextBox.Text = Canvas.GetTop(ellipse).ToString();
+                    SizeEditTextBox1.Text = ellipse.Width.ToString();
+                    SizeEditTextBox2.Text = "";
+                    XEditLabel.Content = "X";
+                    YEditLabel.Content = "Y";
+                    SizeEditLabel1.Content = "Średnica";
+                    SizeEditLabel2.Content = "";
                 }
             }
             else
@@ -731,6 +737,10 @@ namespace Grafika.Views
             YTextBox.Text = "";
             SizeTextBox1.Text = "";
             SizeTextBox2.Text = "";
+            XEditTextBox.Text = "";
+            YEditTextBox.Text = "";
+            SizeEditTextBox1.Text = "";
+            SizeEditTextBox2.Text = "";
             shapes.Clear();
         }
 
@@ -740,11 +750,12 @@ namespace Grafika.Views
             {
                 try
                 {
-                    if (double.TryParse(XTextBox.Text, out double x) &&
-                        double.TryParse(YTextBox.Text, out double y) &&
-                        double.TryParse(SizeTextBox1.Text, out double s1) &&
-                        double.TryParse(SizeTextBox2.Text, out double s2))
+                    if (double.TryParse(XEditTextBox.Text, out double x) &&
+                        double.TryParse(YEditTextBox.Text, out double y) &&
+                        double.TryParse(SizeEditTextBox1.Text, out double s1)
+                        )
                     {
+                        double.TryParse(SizeEditTextBox2.Text, out double s2);
                         Canvas.SetLeft(currentShape, x);
                         Canvas.SetTop(currentShape, y);
 
@@ -756,7 +767,7 @@ namespace Grafika.Views
                         else if (currentShape is Ellipse ellipse)
                         {
                             ellipse.Width = s1;
-                            ellipse.Height = s2;
+                            ellipse.Height = s1;
                         }
                         else if (currentShape is Line line)
                         {

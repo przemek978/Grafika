@@ -6,7 +6,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:Grafika.Views"
         mc:Ignorable="d"
-        Title="Canvas" Height="850" Width="850" MinHeight="850" MinWidth="850">
+        Title="Canvas" Height="850" Width="850" MinHeight="880" MinWidth="850">
     <Grid Background="#FF017302">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="3*"></ColumnDefinition>
@@ -18,7 +18,7 @@
                 <RowDefinition Height="3*"></RowDefinition>
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="CANVAS" FontSize="24" FontWeight="Bold" TextAlignment="Center" Margin="0,5,0,5"/>
-            <Border Grid.Row="1" Background="White" Name="canvasBorder" CornerRadius="10">
+            <Border Grid.Row="1" Background="White" Name="canvasBorder" CornerRadius="10" Margin="5">
                 <Canvas Grid.Row="1" Background="Transparent" Name="canvas" MouseLeftButtonDown="Canvas_MouseLeftButtonDown" MouseLeftButtonUp="Canvas_MouseLeftButtonUp" MouseMove="Canvas_MouseMove" KeyDown="Canvas_KeyDown" Focusable="True"/>
             </Border>
         </Grid>
@@ -28,7 +28,7 @@
                 <RowDefinition Height="*"></RowDefinition>
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
-            <StackPanel Grid.Row="0" VerticalAlignment="Top" Margin="5,0,5,0">
+            <StackPanel Grid.Row="0" VerticalAlignment="Top" Margin="5,5,5,0">
                 <Label HorizontalAlignment="Center" FontWeight="Bold" FontSize="24">Parametry</Label>
                 <RadioButton Content="Linia" GroupName="ShapeGroup" Checked="ShapeRadioButton_Checked" IsChecked="True" Tag="1"/>
                 <RadioButton Content="Prostokąt" GroupName="ShapeGroup" Checked="ShapeRadioButton_Checked" Tag="2"/>
@@ -61,7 +61,7 @@
             </StackPanel>
             <StackPanel Grid.Row="2" Margin="5,0,5,0">
                 <!--Visibility="{Binding currentShape, Converter={StaticResource NullToVisibilityConverter}}"-->
-                <TextBlock Text="Dane kształtu" FontSize="16" FontWeight="Bold" TextAlignment="Center"></TextBlock>
+                <TextBlock Text="Dane kształtu" FontSize="16" FontWeight="Bold" TextAlignment="Center" Margin="0,5,0,0"></TextBlock>
                 <Label Content="X1:" x:Name="XEditLabel"/>
                 <TextBox x:Name="XEditTextBox"/>
                 <Label Content="Y1:" x:Name="YEditLabel"/>

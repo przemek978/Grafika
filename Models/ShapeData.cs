@@ -20,9 +20,9 @@ namespace Grafika.Models
             public double Y { get; set; }
             public double Width { get; set; } 
             public double Height { get; set; }
-            public string FillColor { get; set; }
-            public string StrokeColor { get; set; } 
-            public double StrokeThickness { get; set; }
+            //public string FillColor { get; set; }
+            //public string StrokeColor { get; set; } 
+            //public double StrokeThickness { get; set; }
 
             public ShapeData()
             {
@@ -30,9 +30,9 @@ namespace Grafika.Models
                 Y = 0;
                 Width = 0;
                 Height = 0;
-                FillColor = "#FFFFFF";
-                StrokeColor = "#000000"; 
-                StrokeThickness = 5;
+                //FillColor = "#FFFFFF";
+                //StrokeColor = "#000000"; 
+                //StrokeThickness = 5;
             }
         }
 

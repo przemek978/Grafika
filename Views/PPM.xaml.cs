@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using Color = System.Drawing.Color;
 using Encoder = System.Drawing.Imaging.Encoder;
 
@@ -77,6 +78,7 @@ namespace Grafika.Views
 
         private void LoadAndDisplayPPMP3(string filePath)
         {
+            var pixelList = new List<Color>();
             using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             using (StreamReader reader = new StreamReader(fs))
             {
@@ -140,97 +142,54 @@ namespace Grafika.Views
                     }
                 }
                 Bitmap image = new Bitmap(width, height);
+                List<string> allPixels = new List<string>();
+                while ((line = reader.ReadLine()) != null)
+                {
+                    line = removeComments((string)line);
+                    if (line != null)
+                    {
+                        string[] newline = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var c in newline)
+                        {
+                            allPixels.Add(c);
+                        }
+                    }
+                }
                 for (int y = 0; y < height; y++)
                 {
-                    int red = 0;
-                    int green = 0;
-                    int blue = 0;
-                    //line = removeComments(reader.ReadLine());
-                    do
-                    {
-                        line = removeComments(reader.ReadLine());
-                    } while (string.IsNullOrWhiteSpace(line)); // Pomijaj puste linie
 
-                    string[] pixels = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                     for (int x = 0; x < width; x++)
                     {
-                        if (pixels.Length >= 3)
+                        int red = 0;
+                        int green = 0;
+                        int blue = 0;
+
+                        if (allPixels.Count>=3)
                         {
-                            red = int.Parse(pixels[x * 3]);
-                            green = int.Parse(pixels[x * 3 + 1]);
-                            blue = int.Parse(pixels[x * 3 + 2]);
+                            red = int.Parse(allPixels[x * 3]);
+                            green = int.Parse(allPixels[x * 3 + 1]);
+                            blue = int.Parse(allPixels[x * 3 + 2]);
                         }
-                        else if (pixels.Length == 1)
-                        {
-                            red = int.Parse(pixels[0]);
-                            // Sprawdzamy, czy wartość jest poprzedzona "#", co oznacza komentarz
-                            if (reader.Peek() == (int)'#')
-                            {
-                                reader.ReadLine(); // Pomijamy linię z "#" jako komentarz
-                                                   // Odczytujemy następne linie jako wartości koloró
-                                while (true)
-                                {
-                                    line = removeComments(reader.ReadLine());
-                                    if (!string.IsNullOrWhiteSpace(line))
-                                    {
-                                        green = int.Parse(line);
-                                        break;
-                                    }
-                                }
-
-                                while (true)
-                                {
-                                    line = removeComments(reader.ReadLine());
-                                    if (!string.IsNullOrWhiteSpace(line))
-                                    {
-                                        blue = int.Parse(line);
-                                        break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                while (true)
-                                {
-                                    line = removeComments(reader.ReadLine());
-                                    if (!string.IsNullOrWhiteSpace(line))
-                                    {
-                                        green = int.Parse(line);
-                                        break;
-                                    }
-                                }
-
-                                while (true)
-                                {
-                                    line = removeComments(reader.ReadLine());
-                                    if (!string.IsNullOrWhiteSpace(line))
-                                    {
-                                        blue = int.Parse(line);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-
-                        // Skalowanie wartości koloru do zakresu 0-255
                         red = (int)((red / 255.0) * 255);
                         green = (int)((green / 255.0) * 255);
                         blue = (int)((blue / 255.0) * 255);
 
                         Color pixelColor = Color.FromArgb(255, red, green, blue);
                         image.SetPixel(x, y, pixelColor);
-
                     }
-
-
                 }
 
                 displayedImage.Source = BitmapToImageSource(image);
             }
         }
+
         private string removeComments(string line)
         {
             int commentIndex = line.IndexOf('#');
+            if (commentIndex == 0)
+            {
+                return null;
+            }
             if (commentIndex >= 0)
             {
                 line = line.Substring(0, commentIndex);

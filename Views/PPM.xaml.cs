@@ -5,11 +5,14 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using static System.Net.Mime.MediaTypeNames;
 using Color = System.Drawing.Color;
 using Encoder = System.Drawing.Imaging.Encoder;
 
@@ -142,19 +145,55 @@ namespace Grafika.Views
                     }
                 }
                 Bitmap image = new Bitmap(width, height);
+                //List<string> allPixels = new List<string>();
+                //while ((line = reader.ReadLine()) != null)
+                //{
+                //    line = removeComments((string)line);
+                //    if (line != null)
+                //    {
+                //        string[] newline = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                //        foreach (var c in newline)
+                //        {
+                //            allPixels.Add(c);
+                //        }
+                //    }
+                //}
                 List<string> allPixels = new List<string>();
-                while ((line = reader.ReadLine()) != null)
+                char[] buffer = new char[4096]; // Rozmiar bufora do wczytywania danych
+
+                while (true)
                 {
-                    line = removeComments((string)line);
-                    if (line != null)
+                    int bytesRead = reader.ReadBlock(buffer, 0, buffer.Length);
+
+                    if (bytesRead == 0)
                     {
-                        string[] newline = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var c in newline)
+                        // Koniec pliku
+                        break;
+                    }
+
+                    string dataBlock = new string(buffer, 0, bytesRead);
+                    if (dataBlock.Contains('#'))
+                    {
+                        while (dataBlock.Contains('#'))
                         {
-                            allPixels.Add(c);
+                            dataBlock = removeComments(dataBlock);
+                        }
+                    }
+                    // Usuń komentarze z bloku danych
+                    dataBlock = removeComments(dataBlock);
+
+                    string[] lines = dataBlock.Split(new string[] { "\n" }, StringSplitOptions.None);
+
+                    foreach (var l in lines)
+                    {
+                        string[] tokens = l.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var token in tokens)
+                        {
+                            allPixels.Add(token);
                         }
                     }
                 }
+
                 for (int y = 0; y < height; y++)
                 {
 
@@ -164,7 +203,7 @@ namespace Grafika.Views
                         int green = 0;
                         int blue = 0;
 
-                        if (allPixels.Count>=3)
+                        if (allPixels.Count >= 3)
                         {
                             red = int.Parse(allPixels[x * 3]);
                             green = int.Parse(allPixels[x * 3 + 1]);
@@ -174,7 +213,7 @@ namespace Grafika.Views
                         green = (int)((green / 255.0) * 255);
                         blue = (int)((blue / 255.0) * 255);
 
-                        Color pixelColor = Color.FromArgb(255, red, green, blue);
+                        Color pixelColor = Color.FromArgb(255, red%256, green%256, blue % 256);
                         image.SetPixel(x, y, pixelColor);
                     }
                 }
@@ -192,7 +231,11 @@ namespace Grafika.Views
             }
             if (commentIndex >= 0)
             {
-                line = line.Substring(0, commentIndex);
+                var endcomment = line.Substring(commentIndex);
+                var endcommentIndex = endcomment.IndexOf("\n");
+                var tmp = line.Substring(0, commentIndex);
+                var tmp2 = endcomment.Substring(endcommentIndex);
+                line = tmp + tmp2;
             }
             return line;
         }

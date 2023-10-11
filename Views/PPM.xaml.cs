@@ -125,25 +125,30 @@ namespace Grafika.Views
                             else if (height == 0)
                             {
                                 height = value;
-                                break; // Zakończ, jeśli znaleziono już szerokość i wysokość
+                                // Zakończ, jeśli znaleziono już szerokość i wysokość
+                            }
+                            else if(maxValue == 0)
+                            {
+                                maxValue = value;
+                                break;
                             }
                         }
                     }
 
-                    if (width > 0 && height > 0)
+                    if (width > 0 && height > 0 && maxValue>0)
                     {
                         break; // Zakończ, jeśli znaleziono szerokość i wysokość
                     }
                 }
 
                 // Odczytaj maksymalną wartość koloru
-                while ((line = reader.ReadLine()) != null)
-                {
-                    if (int.TryParse(line, out maxValue))
-                    {
-                        break;
-                    }
-                }
+                //while ((line = reader.ReadLine()) != null)
+                //{
+                //    if (int.TryParse(line, out maxValue))
+                //    {
+                //        break;
+                //    }
+                //}
                 Bitmap image = new Bitmap(width, height);
                 //List<string> allPixels = new List<string>();
                 //while ((line = reader.ReadLine()) != null)

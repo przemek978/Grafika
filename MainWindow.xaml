@@ -7,7 +7,12 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="200" Width="200">
     <Grid>
-        <Button Content="Canvas" HorizontalAlignment="Center" VerticalAlignment="Center" Height="184" Width="200" Click="Button_Click"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*"></RowDefinition>
+            <RowDefinition Height="1*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Button Grid.Row="0" Content="Canvas" Click="Canvas_Click"/>
+        <Button Grid.Row="1" Content="PPM" Click="PPM_Click"/>
 
     </Grid>
 </Window>

@@ -26,10 +26,17 @@ namespace Grafika
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void Canvas_Click(object sender, RoutedEventArgs e)
         {
             CanvasView canvas = new CanvasView();
             canvas.Show();
+            this.Hide();
+        }
+
+        private void PPM_Click(object sender, RoutedEventArgs e)
+        {
+            PPM pPM = new PPM();
+            pPM.Show();
             this.Hide();
         }
     }

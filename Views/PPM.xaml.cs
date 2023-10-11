@@ -81,26 +81,136 @@ namespace Grafika.Views
             using (StreamReader reader = new StreamReader(fs))
             {
                 // Odczytaj nagłówek
+                //string format = reader.ReadLine();
+                //string dimensionsLine = reader.ReadLine();
+                //string maxColorValueLine = reader.ReadLine();
+
+                //string[] dimensions = dimensionsLine.Split(' ');
+                //int width = int.Parse(dimensions[0]);
+                //int height = int.Parse(dimensions[1]);
+                // Odczytaj format
                 string format = reader.ReadLine();
-                string dimensionsLine = reader.ReadLine();
-                string maxColorValueLine = reader.ReadLine();
 
-                string[] dimensions = dimensionsLine.Split(' ');
-                int width = int.Parse(dimensions[0]);
-                int height = int.Parse(dimensions[1]);
+                // Odczytaj szerokość i wysokość
+                int width = 0;
+                int height = 0;
+                int maxValue = 0;
+                string dimensionsLine;
+                string line;
 
+                while ((dimensionsLine = reader.ReadLine()) != null)
+                {
+                    // Usuń komentarze w linii
+                    int commentIndex = dimensionsLine.IndexOf('#');
+                    if (commentIndex >= 0)
+                    {
+                        dimensionsLine = dimensionsLine.Substring(0, commentIndex);
+                    }
+
+                    string[] tokens = dimensionsLine.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (string token in tokens)
+                    {
+                        if (int.TryParse(token, out int value))
+                        {
+                            if (width == 0)
+                            {
+                                width = value;
+                            }
+                            else if (height == 0)
+                            {
+                                height = value;
+                                break; // Zakończ, jeśli znaleziono już szerokość i wysokość
+                            }
+                        }
+                    }
+
+                    if (width > 0 && height > 0)
+                    {
+                        break; // Zakończ, jeśli znaleziono szerokość i wysokość
+                    }
+                }
+
+                // Odczytaj maksymalną wartość koloru
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (int.TryParse(line, out maxValue))
+                    {
+                        break;
+                    }
+                }
                 Bitmap image = new Bitmap(width, height);
-
                 for (int y = 0; y < height; y++)
                 {
-                    string line = reader.ReadLine();
-                    string[] pixels = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    int red = 0;
+                    int green = 0;
+                    int blue = 0;
+                    //line = removeComments(reader.ReadLine());
+                    do
+                    {
+                        line = removeComments(reader.ReadLine());
+                    } while (string.IsNullOrWhiteSpace(line)); // Pomijaj puste linie
 
+                    string[] pixels = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                     for (int x = 0; x < width; x++)
                     {
-                        int red = int.Parse(pixels[x * 3]);
-                        int green = int.Parse(pixels[x * 3 + 1]);
-                        int blue = int.Parse(pixels[x * 3 + 2]);
+                        if (pixels.Length >= 3)
+                        {
+                            red = int.Parse(pixels[x * 3]);
+                            green = int.Parse(pixels[x * 3 + 1]);
+                            blue = int.Parse(pixels[x * 3 + 2]);
+                        }
+                        else if (pixels.Length == 1)
+                        {
+                            red = int.Parse(pixels[0]);
+                            // Sprawdzamy, czy wartość jest poprzedzona "#", co oznacza komentarz
+                            if (reader.Peek() == (int)'#')
+                            {
+                                reader.ReadLine(); // Pomijamy linię z "#" jako komentarz
+                                                   // Odczytujemy następne linie jako wartości koloró
+                                while (true)
+                                {
+                                    line = removeComments(reader.ReadLine());
+                                    if (!string.IsNullOrWhiteSpace(line))
+                                    {
+                                        green = int.Parse(line);
+                                        break;
+                                    }
+                                }
+
+                                while (true)
+                                {
+                                    line = removeComments(reader.ReadLine());
+                                    if (!string.IsNullOrWhiteSpace(line))
+                                    {
+                                        blue = int.Parse(line);
+                                        break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                while (true)
+                                {
+                                    line = removeComments(reader.ReadLine());
+                                    if (!string.IsNullOrWhiteSpace(line))
+                                    {
+                                        green = int.Parse(line);
+                                        break;
+                                    }
+                                }
+
+                                while (true)
+                                {
+                                    line = removeComments(reader.ReadLine());
+                                    if (!string.IsNullOrWhiteSpace(line))
+                                    {
+                                        blue = int.Parse(line);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
 
                         // Skalowanie wartości koloru do zakresu 0-255
                         red = (int)((red / 255.0) * 255);
@@ -109,11 +219,23 @@ namespace Grafika.Views
 
                         Color pixelColor = Color.FromArgb(255, red, green, blue);
                         image.SetPixel(x, y, pixelColor);
+
                     }
+
+
                 }
 
                 displayedImage.Source = BitmapToImageSource(image);
             }
+        }
+        private string removeComments(string line)
+        {
+            int commentIndex = line.IndexOf('#');
+            if (commentIndex >= 0)
+            {
+                line = line.Substring(0, commentIndex);
+            }
+            return line;
         }
 
         private void LoadAndDisplayPPMP6(string filePath)

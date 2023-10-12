@@ -85,14 +85,6 @@ namespace Grafika.Views
             using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             using (StreamReader reader = new StreamReader(fs))
             {
-                // Odczytaj nagłówek
-                //string format = reader.ReadLine();
-                //string dimensionsLine = reader.ReadLine();
-                //string maxColorValueLine = reader.ReadLine();
-
-                //string[] dimensions = dimensionsLine.Split(' ');
-                //int width = int.Parse(dimensions[0]);
-                //int height = int.Parse(dimensions[1]);
                 // Odczytaj format
                 string format = reader.ReadLine();
 
@@ -141,28 +133,7 @@ namespace Grafika.Views
                     }
                 }
 
-                // Odczytaj maksymalną wartość koloru
-                //while ((line = reader.ReadLine()) != null)
-                //{
-                //    if (int.TryParse(line, out maxValue))
-                //    {
-                //        break;
-                //    }
-                //}
                 Bitmap image = new Bitmap(width, height);
-                //List<string> allPixels = new List<string>();
-                //while ((line = reader.ReadLine()) != null)
-                //{
-                //    line = removeComments((string)line);
-                //    if (line != null)
-                //    {
-                //        string[] newline = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                //        foreach (var c in newline)
-                //        {
-                //            allPixels.Add(c);
-                //        }
-                //    }
-                //}
                 List<string> allPixels = new List<string>();
                 char[] buffer = new char[4096]; // Rozmiar bufora do wczytywania danych
 
@@ -250,22 +221,54 @@ namespace Grafika.Views
             using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             using (BinaryReader reader = new BinaryReader(fs))
             {
-                // Pomijamy analizę nagłówka
-                reader.BaseStream.Seek(3, SeekOrigin.Current); // Pomijamy ewentualny komentarz
-                reader.BaseStream.Seek(12, SeekOrigin.Current); // Pomijamy wymiary i maksymalną wartość koloru
+                // Odczytaj format
+                string format = Encoding.ASCII.GetString(reader.ReadBytes(2));
+                if (format != "P6")
+                {
+                    // Niepoprawny format
+                    return;
+                }
 
-                int width = 100; // Przykładowa szerokość
-                int height = 100; // Przykładowa wysokość
+                // Odczytaj szerokość i wysokość
+                int width = 0;
+                int height = 0;
+                int maxValue = 0;
+                bool dimensionsRead = false;
+
+                while (!dimensionsRead)
+                {
+                    string line = ReadLine(reader);
+                    if (line.StartsWith("#"))
+                    {
+                        // Pomijaj komentarze
+                        continue;
+                    }
+
+                    string[] tokens = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (tokens.Length == 2 && int.TryParse(tokens[0], out int w) && int.TryParse(tokens[1], out int h))
+                    {
+                        width = w;
+                        height = h;
+                        dimensionsRead = true;
+                    }
+                }
+
+                maxValue = int.Parse(ReadLine(reader));
 
                 Bitmap image = new Bitmap(width, height);
+                byte[] pixelData = reader.ReadBytes(width * height * 3);
+
+                int dataIndex = 0;
 
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)
                     {
-                        byte red = reader.ReadByte();
-                        byte green = reader.ReadByte();
-                        byte blue = reader.ReadByte();
+                        int red = pixelData[dataIndex++];
+                        int green = pixelData[dataIndex++];
+                        int blue = pixelData[dataIndex++];
+
                         Color pixelColor = Color.FromArgb(255, red, green, blue);
                         image.SetPixel(x, y, pixelColor);
                     }
@@ -274,6 +277,20 @@ namespace Grafika.Views
                 displayedImage.Source = BitmapToImageSource(image);
             }
         }
+
+        private string ReadLine(BinaryReader reader)
+        {
+            List<byte> buffer = new List<byte>();
+            byte currentByte;
+
+            while ((currentByte = reader.ReadByte()) != 10) // 10 is the ASCII code for newline
+            {
+                buffer.Add(currentByte);
+            }
+
+            return Encoding.ASCII.GetString(buffer.ToArray());
+        }
+
 
         private Bitmap LoadJPEG(string filePath)
         {

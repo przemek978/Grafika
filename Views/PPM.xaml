@@ -11,7 +11,9 @@
             <ColumnDefinition Width="2*"></ColumnDefinition>
             <ColumnDefinition  Width="auto"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <Image x:Name="displayedImage" Grid.Column="0"/>
+        <ScrollViewer Name="imageScrollViewer">
+            <Image x:Name="displayedImage" Grid.Column="0"/>
+        </ScrollViewer>
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="1*"></RowDefinition>

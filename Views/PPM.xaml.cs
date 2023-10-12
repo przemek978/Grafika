@@ -8,10 +8,12 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using static System.Formats.Asn1.AsnWriter;
 using static System.Net.Mime.MediaTypeNames;
 using Color = System.Drawing.Color;
 using Encoder = System.Drawing.Imaging.Encoder;
@@ -32,43 +34,89 @@ namespace Grafika.Views
         private void LoadImage_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Pliki PPM|*.ppm";
+            openFileDialog.Filter = "Pliki PPM|*.ppm|Pliki JPEG|*.jpg;*.jpeg";
 
             if (openFileDialog.ShowDialog() == true)
             {
                 string filePath = openFileDialog.FileName;
 
-                string ppmFormat = ReadPPMFormat(filePath);
+                if (filePath.EndsWith(".ppm", StringComparison.OrdinalIgnoreCase))
+                {
+                    string ppmFormat = ReadPPMFormat(filePath);
 
-                if (ppmFormat == "P3")
-                {
-                    LoadAndDisplayPPMP3(filePath);
+                    if (ppmFormat == "P3")
+                    {
+                        LoadAndDisplayPPMP3(filePath, 5);
+                    }
+                    else if (ppmFormat == "P6")
+                    {
+                        LoadAndDisplayPPMP6(filePath);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Nieobsługiwany format PPM.");
+                    }
                 }
-                else if (ppmFormat == "P6")
+                else if (filePath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
                 {
-                    LoadAndDisplayPPMP6(filePath);
+                    LoadAndDisplayJPEG(filePath);
                 }
                 else
                 {
-                    MessageBox.Show("Nieobsługiwany format PPM.");
+                    MessageBox.Show("Nieobsługiwany format pliku.");
                 }
+            }
+        }
+
+        private void LoadAndDisplayJPEG(string filePath)
+        {
+            // Wczytywanie i wyświetlanie obrazu w formacie JPEG
+            try
+            {
+                BitmapImage image = new BitmapImage(new Uri(filePath));
+                displayedImage.Source = image;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Błąd podczas wczytywania pliku JPEG: " + ex.Message);
             }
         }
 
         private void SaveToJPEG_Click(object sender, RoutedEventArgs e)
         {
-            if (currentImage != null)
-            {
-                SaveFileDialog saveFileDialog = new SaveFileDialog();
-                saveFileDialog.Filter = "Pliki JPEG (*.jpg)|*.jpg";
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "Pliki JPEG|*.jpg";
 
-                if (saveFileDialog.ShowDialog() == true)
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                string filePath = saveFileDialog.FileName;
+
+                try
                 {
-                    string filePath = saveFileDialog.FileName;
-                    SaveToJPEG(currentImage, filePath, 80); // 80 to stopień kompresji (od 0 do 100)
+                    // Pobierz bieżący obraz z kontrolki displayedImage
+                    BitmapSource bitmapSource = (BitmapSource)displayedImage.Source;
+
+                    // Utwórz kodera JPEG
+                    JpegBitmapEncoder encoder = new JpegBitmapEncoder();
+                    encoder.QualityLevel = 1; // Ustaw jakość obrazu (0-100)
+
+                    // Dodaj obraz do kodera
+                    encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
+
+                    // Zapisz obraz do pliku
+                    using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        encoder.Save(stream);
+                    }
+                    MessageBox.Show("Obraz został zapisany w formacie JPEG.");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Błąd podczas zapisywania pliku JPEG: " + ex.Message);
                 }
             }
         }
+
 
         private string ReadPPMFormat(string filePath)
         {
@@ -79,7 +127,7 @@ namespace Grafika.Views
             }
         }
 
-        private void LoadAndDisplayPPMP3(string filePath)
+        private void LoadAndDisplayPPMP3(string filePath, double scale)
         {
             var pixelList = new List<Color>();
             using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
@@ -119,7 +167,7 @@ namespace Grafika.Views
                                 height = value;
                                 // Zakończ, jeśli znaleziono już szerokość i wysokość
                             }
-                            else if(maxValue == 0)
+                            else if (maxValue == 0)
                             {
                                 maxValue = value;
                                 break;
@@ -127,13 +175,14 @@ namespace Grafika.Views
                         }
                     }
 
-                    if (width > 0 && height > 0 && maxValue>0)
+                    if (width > 0 && height > 0 && maxValue > 0)
                     {
                         break; // Zakończ, jeśli znaleziono szerokość i wysokość
                     }
                 }
 
-                Bitmap image = new Bitmap(width, height);
+                //Bitmap image = new Bitmap(width, height);
+                Bitmap image = new Bitmap((int)(width * scale), (int)(height * scale));
                 List<string> allPixels = new List<string>();
                 char[] buffer = new char[4096]; // Rozmiar bufora do wczytywania danych
 
@@ -189,11 +238,25 @@ namespace Grafika.Views
                         green = (int)((green / 255.0) * 255);
                         blue = (int)((blue / 255.0) * 255);
 
-                        Color pixelColor = Color.FromArgb(255, red%256, green%256, blue % 256);
-                        image.SetPixel(x, y, pixelColor);
+
+                        for (int sy = 0; sy < scale; sy++)
+                        {
+                            for (int sx = 0; sx < scale; sx++)
+                            {
+                                int scaledX = (int)(x * scale + sx);
+                                int scaledY = (int)(y * scale + sy);
+                                image.SetPixel(scaledX, scaledY, Color.FromArgb(255, red, green, blue));
+                            }
+                        }
+
+                        //else
+                        //{
+                        //    Color pixelColor = Color.FromArgb(255, red % 256, green % 256, blue % 256);
+                        //    image.SetPixel(x, y, pixelColor);
+
+                        //}
                     }
                 }
-
                 displayedImage.Source = BitmapToImageSource(image);
             }
         }
@@ -292,24 +355,24 @@ namespace Grafika.Views
         }
 
 
-        private Bitmap LoadJPEG(string filePath)
-        {
-            return new Bitmap(filePath);
-        }
+        //private Bitmap LoadJPEG(string filePath)
+        //{
+        //    return new Bitmap(filePath);
+        //}
 
-        private void DisplayImage(Bitmap image)
-        {
-            displayedImage.Source = BitmapToImageSource(image);
-        }
+        //private void DisplayImage(Bitmap image)
+        //{
+        //    displayedImage.Source = BitmapToImageSource(image);
+        //}
 
-        private void SaveToJPEG(Bitmap image, string filePath, long quality)
-        {
-            EncoderParameter qualityParam = new EncoderParameter(Encoder.Quality, quality);
-            ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
-            EncoderParameters encoderParams = new EncoderParameters(1);
-            encoderParams.Param[0] = qualityParam;
-            image.Save(filePath, jpegCodec, encoderParams);
-        }
+        //private void SaveToJPEG(Bitmap image, string filePath, long quality)
+        //{
+        //    EncoderParameter qualityParam = new EncoderParameter(Encoder.Quality, quality);
+        //    ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
+        //    EncoderParameters encoderParams = new EncoderParameters(1);
+        //    encoderParams.Param[0] = qualityParam;
+        //    image.Save(filePath, jpegCodec, encoderParams);
+        //}
 
         private ImageSource BitmapToImageSource(Bitmap bitmap)
         {

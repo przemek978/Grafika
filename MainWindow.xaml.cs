@@ -39,5 +39,10 @@ namespace Grafika
             pPM.Show();
             this.Hide();
         }
+
+        private void Colors_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

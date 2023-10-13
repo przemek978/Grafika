@@ -46,7 +46,7 @@ namespace Grafika.Views
 
                     if (ppmFormat == "P3")
                     {
-                        LoadAndDisplayPPMP3(filePath, 5);
+                        LoadAndDisplayPPMP3(filePath, double.Parse(scaleTextBox.Text));
                     }
                     else if (ppmFormat == "P6")
                     {
@@ -98,7 +98,9 @@ namespace Grafika.Views
 
                     // Utwórz kodera JPEG
                     JpegBitmapEncoder encoder = new JpegBitmapEncoder();
-                    encoder.QualityLevel = 1; // Ustaw jakość obrazu (0-100)
+
+                    int.TryParse(qualityTextBox.Text, out int Quality);
+                    encoder.QualityLevel = Quality!=0 ? Quality: 95; // Ustaw jakość obrazu (0-100)
 
                     // Dodaj obraz do kodera
                     encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
@@ -114,16 +116,6 @@ namespace Grafika.Views
                 {
                     MessageBox.Show("Błąd podczas zapisywania pliku JPEG: " + ex.Message);
                 }
-            }
-        }
-
-
-        private string ReadPPMFormat(string filePath)
-        {
-            using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            using (StreamReader reader = new StreamReader(fs))
-            {
-                return reader.ReadLine().Trim();
             }
         }
 
@@ -248,13 +240,6 @@ namespace Grafika.Views
                                 image.SetPixel(scaledX, scaledY, Color.FromArgb(255, red, green, blue));
                             }
                         }
-
-                        //else
-                        //{
-                        //    Color pixelColor = Color.FromArgb(255, red % 256, green % 256, blue % 256);
-                        //    image.SetPixel(x, y, pixelColor);
-
-                        //}
                     }
                 }
                 displayedImage.Source = BitmapToImageSource(image);
@@ -354,26 +339,6 @@ namespace Grafika.Views
             return Encoding.ASCII.GetString(buffer.ToArray());
         }
 
-
-        //private Bitmap LoadJPEG(string filePath)
-        //{
-        //    return new Bitmap(filePath);
-        //}
-
-        //private void DisplayImage(Bitmap image)
-        //{
-        //    displayedImage.Source = BitmapToImageSource(image);
-        //}
-
-        //private void SaveToJPEG(Bitmap image, string filePath, long quality)
-        //{
-        //    EncoderParameter qualityParam = new EncoderParameter(Encoder.Quality, quality);
-        //    ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
-        //    EncoderParameters encoderParams = new EncoderParameters(1);
-        //    encoderParams.Param[0] = qualityParam;
-        //    image.Save(filePath, jpegCodec, encoderParams);
-        //}
-
         private ImageSource BitmapToImageSource(Bitmap bitmap)
         {
             MemoryStream memoryStream = new MemoryStream();
@@ -399,6 +364,15 @@ namespace Grafika.Views
                 }
             }
             return null;
+        }
+
+        private string ReadPPMFormat(string filePath)
+        {
+            using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            using (StreamReader reader = new StreamReader(fs))
+            {
+                return reader.ReadLine().Trim();
+            }
         }
     }
 }

@@ -18,9 +18,16 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="1*"></RowDefinition>
                 <RowDefinition Height="1*"></RowDefinition>
+                <RowDefinition Height="1*"></RowDefinition>
             </Grid.RowDefinitions>
-            <Button Grid.Row="0" Content="Wczytaj obraz" Click="LoadImage_Click" />
-            <Button Grid.Row="1" Content="Zapisz do JPEG" Click="SaveToJPEG_Click" />
+            <StackPanel>
+                <Label Content="Skala"/>
+                <TextBox x:Name="scaleTextBox" Text="1"/>
+                <Label Content="Poziom kompresji"/>
+                <TextBox x:Name="qualityTextBox"/>
+            </StackPanel>
+            <Button Grid.Row="1" Content="Wczytaj obraz" Click="LoadImage_Click" />
+            <Button Grid.Row="2" Content="Zapisz do JPEG" Click="SaveToJPEG_Click" />
         </Grid>
     </Grid>
 </Window>

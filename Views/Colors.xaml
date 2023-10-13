@@ -1,0 +1,176 @@
+﻿<Window x:Class="Grafika.Views.Colors"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Grafika.Views"
+        mc:Ignorable="d"
+        Title="Colors" Height="700" Width="700" MinHeight="700" MinWidth="700">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid Name="colorConversionPanel" Grid.Column="0" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="1.8*"></RowDefinition>
+                <RowDefinition Height="1.8*"></RowDefinition>
+                <RowDefinition Height="1.5*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <StackPanel>
+                <TextBlock Text="Color Conversion" FontWeight="Bold" FontSize="16"/>
+                <RadioButton Content="RGB to CMYK" x:Name="RGBtoCMYK" Checked="RGBtoCMYK_Checked" IsChecked="True"/>
+                <RadioButton Content="CMYK to RGB" x:Name="CMYKtoRGB" Checked="CMYKtoRGB_Checked"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Name="RGBInputs" Margin="0,10">
+                <TextBlock Text="RGB" FontWeight="Bold"/>
+                <Slider Name="redSlider" Value="0" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
+                <Slider Name="greenSlider" Value="0" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
+                <Slider Name="blueSlider" Value="0" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="R:"/>
+                    <TextBox Name="redTextBox" Text="0" TextChanged="ColorTextBox_TextChanged"  Style="{StaticResource ColorsTextBox}"/>
+                    <TextBlock Text="G:"/>
+                    <TextBox Name="greenTextBox" Text="0" TextChanged="ColorTextBox_TextChanged" Style="{StaticResource ColorsTextBox}"/>
+                    <TextBlock Text="B:"/>
+                    <TextBox Name="blueTextBox" Text="0" TextChanged="ColorTextBox_TextChanged" Style="{StaticResource ColorsTextBox}"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Row="2" Name="CMYKInputs" Margin="0,10" >
+                <TextBlock Text="CMYK" FontWeight="Bold"/>
+                <Slider Name="cyanSlider" Value="0" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
+                <Slider Name="magentaSlider" Value="0" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
+                <Slider Name="yellowSlider" Value="0" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
+                <Slider Name="blackSlider" Value="0" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="C:"/>
+                    <TextBox Name="cyanTextBox" Text="0" TextChanged="ColorTextBox_TextChanged" Style="{StaticResource ColorsTextBox}"/>
+                    <TextBlock Text="M:"/>
+                    <TextBox Name="magentaTextBox" Text="0" TextChanged="ColorTextBox_TextChanged" Style="{StaticResource ColorsTextBox}"/>
+                    <TextBlock Text="Y:"/>
+                    <TextBox Name="yellowTextBox" Text="0" TextChanged="ColorTextBox_TextChanged" Style="{StaticResource ColorsTextBox}"/>
+                    <TextBlock Text="K:"/>
+                    <TextBox Name="blackTextBox" Text="0" TextChanged="ColorTextBox_TextChanged" Style="{StaticResource ColorsTextBox}"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Row="3">
+                <Button x:Name="convert" Content="Konwertuj" Click="convert_Click"></Button>
+                <TextBlock Text="Converted Color" FontWeight="Bold" Margin="0,10"/>
+                <Rectangle Name="convertedColor" Width="50" Height="50" Margin="0,5"/>
+                <TextBlock x:Name="colorCodeTextBlock" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+            </StackPanel>
+        </Grid>
+
+        <Viewport3D x:Name="viewport3D" Grid.Column="1">
+            <!-- Kamera -->
+            <Viewport3D.Camera>
+                <PerspectiveCamera Position="2 2 2" LookDirection="-2 -2 -2" UpDirection="0 1 0" />
+            </Viewport3D.Camera>
+            <ModelVisual3D>
+                <ModelVisual3D.Content>
+                    <DirectionalLight x:Name="dirLightMain" Direction="-1,-1,-1">
+                    </DirectionalLight>
+                </ModelVisual3D.Content>
+            </ModelVisual3D>
+
+            <!-- Ściana 1 w kolorze czerwonym -->
+            <ModelVisual3D>
+                <ModelVisual3D.Content>
+                    <GeometryModel3D x:Name="meshMain1">
+                        <GeometryModel3D.Geometry>
+                            <MeshGeometry3D
+                        Positions="0 0 0  1 0 0  0 1 0  1 1 0  0 0 1  1 0 1  0 1 1  1 1 1"
+                        TriangleIndices="6 5 7  6 4 5 ">
+                            </MeshGeometry3D>
+                        </GeometryModel3D.Geometry>
+                        <GeometryModel3D.Material>
+                            <DiffuseMaterial>
+                                <DiffuseMaterial.Brush>
+                                    <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                        <GradientStop Color="Red" Offset="0.0"/>
+                                    </LinearGradientBrush>
+                                </DiffuseMaterial.Brush>
+                            </DiffuseMaterial>
+                        </GeometryModel3D.Material>
+                        <GeometryModel3D.Transform>
+                            <RotateTransform3D>
+                                <RotateTransform3D.Rotation>
+                                    <AxisAngleRotation3D Axis="1 0 0" Angle="0"/>
+                                </RotateTransform3D.Rotation>
+                            </RotateTransform3D>
+                        </GeometryModel3D.Transform>
+                    </GeometryModel3D>
+                </ModelVisual3D.Content>
+            </ModelVisual3D>
+
+            <!-- Ściana 2 w kolorze zielonym -->
+            <ModelVisual3D>
+                <ModelVisual3D.Content>
+                    <GeometryModel3D x:Name="meshMain2">
+                        <GeometryModel3D.Geometry>
+                            <MeshGeometry3D
+                        Positions="0 0 0  1 0 0  0 1 0  1 1 0  0 0 1  1 0 1  0 1 1  1 1 1"
+                        TriangleIndices="2 7 3  2 6 7">
+                            </MeshGeometry3D>
+                        </GeometryModel3D.Geometry>
+                        <GeometryModel3D.Material>
+                            <DiffuseMaterial>
+                                <DiffuseMaterial.Brush>
+                                    <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                        <GradientStop Color="Green" Offset="0.0"/>
+                                    </LinearGradientBrush>
+                                </DiffuseMaterial.Brush>
+                            </DiffuseMaterial>
+                        </GeometryModel3D.Material>
+                        <GeometryModel3D.Transform>
+                            <RotateTransform3D>
+                                <RotateTransform3D.Rotation>
+                                    <AxisAngleRotation3D Axis="1 0 0" Angle="0"/>
+                                </RotateTransform3D.Rotation>
+                            </RotateTransform3D>
+                        </GeometryModel3D.Transform>
+                    </GeometryModel3D>
+                </ModelVisual3D.Content>
+            </ModelVisual3D>
+
+            <!-- Ściana 3 w kolorze niebieskim -->
+            <ModelVisual3D>
+                <ModelVisual3D.Content>
+                    <GeometryModel3D x:Name="meshMain3">
+                        <GeometryModel3D.Geometry>
+                            <MeshGeometry3D
+                        Positions="0 0 0  1 0 0  0 1 0  1 1 0  0 0 1  1 0 1  0 1 1  1 1 1"
+                        TriangleIndices="7 1 3  7 5 1">
+                            </MeshGeometry3D>
+                        </GeometryModel3D.Geometry>
+                        <GeometryModel3D.Material>
+                            <DiffuseMaterial>
+                                <DiffuseMaterial.Brush>
+                                    <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                        <GradientStop Color="Blue" Offset="0.0"/>
+                                    </LinearGradientBrush>
+                                </DiffuseMaterial.Brush>
+                            </DiffuseMaterial>
+                        </GeometryModel3D.Material>
+                        <GeometryModel3D.Transform>
+                            <RotateTransform3D>
+                                <RotateTransform3D.Rotation>
+                                    <AxisAngleRotation3D Axis="1 0 0" Angle="0"/>
+                                </RotateTransform3D.Rotation>
+                            </RotateTransform3D>
+                        </GeometryModel3D.Transform>
+                    </GeometryModel3D>
+                </ModelVisual3D.Content>
+            </ModelVisual3D>
+        </Viewport3D>
+        <Slider Height="23" HorizontalAlignment="Left" 
+            Margin="12,12,0,0" Name="slider1"
+            VerticalAlignment="Top" Width="187" 
+            Maximum="360"
+            Value="{Binding ElementName=rotate, Path=Angle}" 
+            ValueChanged="slider1_ValueChanged" />
+
+    </Grid>
+</Window>

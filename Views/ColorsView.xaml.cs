@@ -6,20 +6,28 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
-using Colorss = System.Windows.Media.Colors;
 using Color = System.Windows.Media.Color;
 using System.Windows.Media.Imaging;
+using System.Reflection;
+using System.Windows.Input;
 
 namespace Grafika.Views
 {
-    public partial class Colors : Window
+    public partial class ColorsView : Window
     {
         private bool programmaticChange = false;
-
-        public Colors()
+        private System.Windows.Point previousPosition;
+        private bool isRotating = false;
+        private double currentRotation = 0.0;
+        public ColorsView()
         {
             InitializeComponent();
-            //Create3DBox();
+            CreateRGBCube();
+
+            // Dodaj kontrolę myszy do Viewport3D
+            viewport3D.MouseDown += Viewport3D_MouseDown;
+            viewport3D.MouseUp += Viewport3D_MouseUp;
+            viewport3D.MouseMove += Viewport3D_MouseMove;
         }
 
         private void RGBtoCMYK_Checked(object sender, RoutedEventArgs e)
@@ -208,22 +216,122 @@ namespace Grafika.Views
             }
         }
 
+        //private void slider1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        //{
+        //    double angle = slider1.Value; // Pobierz wartość z suwaka
+        //    RotateTransform3D rotateTransform = new RotateTransform3D();
+
+        //    // Obróć modele wokół osi Y
+        //    meshMain1.Transform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 1, 0), angle));
+        //    meshMain2.Transform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 1, 0), angle));
+        //    meshMain3.Transform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 1, 0), angle));
+        //    meshMain4.Transform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 1, 0), angle));
+        //}
+        private void CreateRGBCube()
+        {
+            // Wymiary kostki
+            double width = 1.0;
+            double height = 1.0;
+            double depth = 1.0;
+
+            // Przykładowe współrzędne wierzchołków
+            Point3D[] vertices = new Point3D[]
+            {
+        new Point3D(-0.5, -0.5, -0.5),
+        new Point3D(0.5, -0.5, -0.5),
+        new Point3D(0.5, 0.5, -0.5),
+        new Point3D(-0.5, 0.5, -0.5),
+        new Point3D(-0.5, -0.5, 0.5),
+        new Point3D(0.5, -0.5, 0.5),
+        new Point3D(0.5, 0.5, 0.5),
+        new Point3D(-0.5, 0.5, 0.5)
+            };
+
+            // Indeksy trójkątów definiujące ściany kostki
+            int[] triangleIndices = new int[]
+            {
+        0, 1, 2, 2, 3, 0, // Przód
+        3, 2, 6, 6, 7, 3, // Góra
+        7, 6, 5, 5, 4, 7, // Tył
+        4, 5, 1, 1, 0, 4, // Dół
+        1, 5, 6, 6, 2, 1, // Prawa
+        4, 0, 3, 3, 7, 4  // Lewa
+            };
+
+            Color[] colors = new Color[]
+            {
+        Colors.Red, Colors.Green, Colors.Blue, Colors.White, Colors.Yellow, Colors.Magenta
+            };
+
+            Model3DGroup modelGroup = new Model3DGroup();
+
+            for (int i = 0; i < 6; i++)
+            {
+                DiffuseMaterial diffuseMaterial = new DiffuseMaterial(new SolidColorBrush(colors[i]));
+
+                MeshGeometry3D mesh = new MeshGeometry3D();
+
+                for (int j = 0; j < 6; j++)
+                {
+                    mesh.Positions.Add(vertices[triangleIndices[i * 6 + j]]);
+                }
+
+                GeometryModel3D model = new GeometryModel3D(mesh, diffuseMaterial);
+                modelGroup.Children.Add(model);
+            }
+
+            ModelVisual3D cubeModelVisual = new ModelVisual3D();
+            cubeModelVisual.Content = modelGroup;
+
+            viewport3D.Children.Add(cubeModelVisual);
+        }
+
+        private void Viewport3D_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                previousPosition = e.GetPosition(viewport3D);
+                isRotating = true;
+            }
+        }
+
+        private void Viewport3D_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            isRotating = false;
+        }
+
+        private void Viewport3D_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isRotating)
+            {
+                System.Windows.Point currentPosition = e.GetPosition(viewport3D);
+                double dx = currentPosition.X - previousPosition.X;
+                double dy = currentPosition.Y - previousPosition.Y;
+
+                // Zastosuj obroty w oparciu o zmiany myszy
+                //RotateCamera(viewport3D.Camera as PerspectiveCamera,dx, dy);
+               // CreateRGBCube();
+                previousPosition = currentPosition;
+            }
+        }
+
+        private void RotateCamera(PerspectiveCamera camera, double dx, double dy,double dz)
+        {
+            double rotationSpeed = 0.5;
+            double radiansX = dx * rotationSpeed * Math.PI / 180.0;
+            double radiansY = dy * rotationSpeed * Math.PI / 180.0;
+
+            Matrix3D rotation = new Matrix3D();
+            rotation.Rotate(new Quaternion(camera.UpDirection, radiansX));
+            rotation.Rotate(new Quaternion(camera.LookDirection, radiansY));
+
+            camera.LookDirection = rotation.Transform(camera.LookDirection);
+            camera.UpDirection = rotation.Transform(camera.UpDirection);
+        }
+
         private void slider1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            double angle = slider1.Value; // Pobierz wartość kąta z slidera
-            AxisAngleRotation3D rotation = new AxisAngleRotation3D(new Vector3D(1, 0, 0), angle);
 
-            // Obrót pierwszej ściany (czerwona)
-            RotateTransform3D rotateTransform1 = new RotateTransform3D(rotation);
-            meshMain1.Transform = rotateTransform1;
-
-            // Obrót drugiej ściany (zielona)
-            RotateTransform3D rotateTransform2 = new RotateTransform3D(rotation);
-            meshMain2.Transform = rotateTransform2;
-
-            // Obrót trzeciej ściany (niebieska)
-            RotateTransform3D rotateTransform3 = new RotateTransform3D(rotation);
-            meshMain3.Transform = rotateTransform3;
         }
     }
 }

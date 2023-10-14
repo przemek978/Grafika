@@ -13,7 +13,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using Colors = Grafika.Views.Colors;
 
 namespace Grafika
 {
@@ -43,7 +42,7 @@ namespace Grafika
 
         private void Colors_Click(object sender, RoutedEventArgs e)
         {
-            Colors colors = new Colors();
+            ColorsView colors = new ColorsView();
             colors.Show();
             this.Hide();
         }

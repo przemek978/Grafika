@@ -93,19 +93,15 @@ namespace Grafika.Views
 
                 try
                 {
-                    // Pobierz bieżący obraz z kontrolki displayedImage
                     BitmapSource bitmapSource = (BitmapSource)displayedImage.Source;
 
-                    // Utwórz kodera JPEG
                     JpegBitmapEncoder encoder = new JpegBitmapEncoder();
 
                     int.TryParse(qualityTextBox.Text, out int Quality);
                     encoder.QualityLevel = Quality!=0 ? Quality: 95; // Ustaw jakość obrazu (0-100)
 
-                    // Dodaj obraz do kodera
                     encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
 
-                    // Zapisz obraz do pliku
                     using (FileStream stream = new FileStream(filePath, FileMode.Create))
                     {
                         encoder.Save(stream);
@@ -125,10 +121,8 @@ namespace Grafika.Views
             using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             using (StreamReader reader = new StreamReader(fs))
             {
-                // Odczytaj format
                 string format = reader.ReadLine();
 
-                // Odczytaj szerokość i wysokość
                 int width = 0;
                 int height = 0;
                 int maxValue = 0;
@@ -137,7 +131,6 @@ namespace Grafika.Views
 
                 while ((dimensionsLine = reader.ReadLine()) != null)
                 {
-                    // Usuń komentarze w linii
                     int commentIndex = dimensionsLine.IndexOf('#');
                     if (commentIndex >= 0)
                     {
@@ -157,7 +150,6 @@ namespace Grafika.Views
                             else if (height == 0)
                             {
                                 height = value;
-                                // Zakończ, jeśli znaleziono już szerokość i wysokość
                             }
                             else if (maxValue == 0)
                             {
@@ -169,14 +161,13 @@ namespace Grafika.Views
 
                     if (width > 0 && height > 0 && maxValue > 0)
                     {
-                        break; // Zakończ, jeśli znaleziono szerokość i wysokość
+                        break;
                     }
                 }
-
-                //Bitmap image = new Bitmap(width, height);
+                
                 Bitmap image = new Bitmap((int)(width * scale), (int)(height * scale));
                 List<string> allPixels = new List<string>();
-                char[] buffer = new char[4096]; // Rozmiar bufora do wczytywania danych
+                char[] buffer = new char[4096];
 
                 while (true)
                 {
@@ -184,7 +175,6 @@ namespace Grafika.Views
 
                     if (bytesRead == 0)
                     {
-                        // Koniec pliku
                         break;
                     }
 
@@ -196,7 +186,7 @@ namespace Grafika.Views
                             dataBlock = removeComments(dataBlock);
                         }
                     }
-                    // Usuń komentarze z bloku danych
+
                     dataBlock = removeComments(dataBlock);
 
                     string[] lines = dataBlock.Split(new string[] { "\n" }, StringSplitOptions.None);
@@ -269,15 +259,12 @@ namespace Grafika.Views
             using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             using (BinaryReader reader = new BinaryReader(fs))
             {
-                // Odczytaj format
                 string format = Encoding.ASCII.GetString(reader.ReadBytes(2));
                 if (format != "P6")
                 {
-                    // Niepoprawny format
                     return;
                 }
 
-                // Odczytaj szerokość i wysokość
                 int width = 0;
                 int height = 0;
                 int maxValue = 0;
@@ -288,7 +275,6 @@ namespace Grafika.Views
                     string line = ReadLine(reader);
                     if (line.StartsWith("#"))
                     {
-                        // Pomijaj komentarze
                         continue;
                     }
 

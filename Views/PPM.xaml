@@ -11,10 +11,26 @@
             <ColumnDefinition Width="2*"></ColumnDefinition>
             <ColumnDefinition  Width="auto"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <ScrollViewer Name="imageScrollViewer">
-            <Image x:Name="displayedImage" Grid.Column="0"/>
-        </ScrollViewer>
-        <Grid Grid.Column="1">
+        <!--<ScrollViewer Name="imageScrollViewer">-->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="12*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Image x:Name="displayedImage"  MouseMove="OnImageMouseMove" Stretch="Fill" Grid.Row="0">
+                <!--<Image.LayoutTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                        <TranslateTransform X="0" Y="0"/>
+                    </TransformGroup>
+                </Image.LayoutTransform>-->
+            </Image>
+            <StackPanel Grid.Row="1" Background="White">
+                <TextBlock Name="pixelInfoTextBlock" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10"/>
+            </StackPanel>
+        </Grid>
+        <!--</ScrollViewer>-->
+        <Grid Grid.Column="1" Background="White">
             <Grid.RowDefinitions>
                 <RowDefinition Height="1*"></RowDefinition>
                 <RowDefinition Height="1*"></RowDefinition>

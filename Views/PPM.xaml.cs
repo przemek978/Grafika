@@ -91,30 +91,6 @@ namespace Grafika.Views
             displayedImage.MouseMove += OnImageMouseMove;
         }
 
-        void LimitTranslation()
-        {
-            double minX = displayedImage.ActualWidth - (displayedImage.ActualWidth / imageScale.ScaleX);
-            double minY = displayedImage.ActualHeight - (displayedImage.ActualHeight / imageScale.ScaleY);
-
-            if (imageTranslate.X < 0)
-            {
-                imageTranslate.X = 0;
-            }
-            else if (imageTranslate.X > minX)
-            {
-                imageTranslate.X = minX;
-            }
-
-            if (imageTranslate.Y < 0)
-            {
-                imageTranslate.Y = 0;
-            }
-            else if (imageTranslate.Y > minY)
-            {
-                imageTranslate.Y = minY;
-            }
-        }
-
 
         private void OnImageMouseMove(object sender, MouseEventArgs e)
         {
@@ -132,8 +108,8 @@ namespace Grafika.Views
                     CroppedBitmap crop = new CroppedBitmap(bitmapSource, new Int32Rect(x, y, 1, 1));
                     crop.CopyPixels(pixelData, 4, 0);
 
-                    Color pixelColor = Color.FromArgb(pixelData[3], pixelData[2], pixelData[1], pixelData[0]);
-                    pixelInfoTextBlock.Text = $"R: {pixelColor.R}, G: {pixelColor.G}, B: {pixelColor.B}";
+                    Color pixelColor = Color.FromArgb(pixelData[3], pixelData[0], pixelData[1], pixelData[2]);
+                    pixelInfoTextBlock.Text = $"R: {pixelColor.R}, G: {pixelColor.G}, B: {pixelColor.B} X:{x} Y: {y}";
                 }
             }
         }
@@ -236,6 +212,7 @@ namespace Grafika.Views
                     int maxValue = 0;
                     string dimensionsLine;
                     string line;
+                    string tmp = string.Empty;
 
                     while ((dimensionsLine = reader.ReadLine()) != null)
                     {
@@ -262,23 +239,34 @@ namespace Grafika.Views
                                 else if (maxValue == 0)
                                 {
                                     maxValue = value;
-                                    break;
+                                }
+                                else
+                                {
+                                    tmp += token+'\n';
                                 }
                             }
                         }
 
                         if (width > 0 && height > 0 && maxValue > 0)
                         {
+
                             break;
                         }
                     }
+                    //width = 300;
+                    //height = 200;
+                    //maxValue = 255;
 
-                    Bitmap image = new Bitmap((int)(width * scale), (int)(height * scale));
-                    List<string> allPixels = new List<string>();
-                    char[] buffer = new char[4096];
-
+                    //Bitmap image = new Bitmap((int)(width * scale), (int)(height * scale));
+                    //string[,] allPixels = new string[height,width];
+                    WriteableBitmap image = new WriteableBitmap((int)(width * scale), (int)(height * scale), 96, 96, PixelFormats.Rgb24, null);
+                    int dataSize = width * height * 3;
+                    List<byte> allPixels = new List<byte>();
+                    //int bytesRead = 0;
+                    
                     while (true)
                     {
+                        char[] buffer = new char[4096];
                         int bytesRead = reader.ReadBlock(buffer, 0, buffer.Length);
 
                         if (bytesRead == 0)
@@ -286,7 +274,27 @@ namespace Grafika.Views
                             break;
                         }
 
-                        string dataBlock = new string(buffer, 0, bytesRead);
+                        // Szukaj ostatniego znaku nowej linii "\n" w buforze
+                        int lastNewlineIndex = -1;
+                        string dataBlock = tmp + new string(buffer, 0, buffer.Length);
+
+                        if (Array.LastIndexOf(buffer, '\n') != 4095)
+                        {
+                            lastNewlineIndex = Array.LastIndexOf(buffer, '\n');
+                            dataBlock = tmp + new string(buffer, 0, lastNewlineIndex);
+                        }
+                        tmp = string.Empty;
+                        if (dataBlock.Contains("x"))
+                        {
+                            var a = 1;
+                        }
+                        if (lastNewlineIndex >= 0)
+                        {
+                            // Znaleziono znak nowej linii, zapisz końcówkę do zmiennej tmp
+                            if (bytesRead - lastNewlineIndex - 1 > 0)
+                                tmp = new string(buffer, lastNewlineIndex + 1, bytesRead - lastNewlineIndex - 1);
+                        }
+
                         if (dataBlock.Contains('#'))
                         {
                             while (dataBlock.Contains('#'))
@@ -304,51 +312,18 @@ namespace Grafika.Views
                             string[] tokens = l.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                             foreach (var token in tokens)
                             {
-                                allPixels.Add(token);
+                                allPixels.Add(byte.Parse(token));
                             }
                         }
                     }
+                    int ind = 0;
+                    var pixels = allPixels.ToArray();
 
-                    for (int y = 0; y < height; y++)
-                    {
-
-                        for (int x = 0; x < width; x++)
-                        {
-                            int red = 0;
-                            int green = 0;
-                            int blue = 0;
-
-                            if (allPixels.Count >= 3)
-                            {
-                                red = int.Parse(allPixels[x * 3]);
-                                green = int.Parse(allPixels[x * 3 + 1]);
-                                blue = int.Parse(allPixels[x * 3 + 2]);
-                            }
-                            if (maxValue > 255)
-                            {
-                                double scalingFactor = 255.0 / maxValue;
-                                red = (int)(red * scalingFactor);
-                                green = (int)(green * scalingFactor);
-                                blue = (int)(blue * scalingFactor);
-                            }
-                            red = (int)((red / 255.0) * 255);
-                            green = (int)((green / 255.0) * 255);
-                            blue = (int)((blue / 255.0) * 255);
-
-
-                            for (int sy = 0; sy < scale; sy++)
-                            {
-                                for (int sx = 0; sx < scale; sx++)
-                                {
-                                    int scaledX = (int)(x * scale + sx);
-                                    int scaledY = (int)(y * scale + sy);
-                                    image.SetPixel(scaledX, scaledY, Color.FromArgb(255, red, green, blue));
-                                }
-                            }
-                        }
-                    }
-                    displayedImage.Source = BitmapToImageSource(image);
+                    image.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 3, 0);
+                    displayedImage.Source = image;
                 }
+
+
             }
             catch (Exception ex)
             {
@@ -360,15 +335,10 @@ namespace Grafika.Views
         {
             try
             {
-
                 using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 using (BinaryReader reader = new BinaryReader(fs))
                 {
                     string format = Encoding.ASCII.GetString(reader.ReadBytes(2));
-                    if (format != "P6")
-                    {
-                        return;
-                    }
 
                     int width = 0;
                     int height = 0;
@@ -431,6 +401,7 @@ namespace Grafika.Views
                         bytesRead += bytesReadThisBlock;
                     }
                     image.WritePixels(new Int32Rect(0, 0, width, height), allPixels, width * 3, 0);
+
                     displayedImage.Source = image;
 
                 }
@@ -441,92 +412,7 @@ namespace Grafika.Views
             }
         }
 
-        private void ReadPPMP6(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "PPM P6 files (.ppm)|.ppm";
-            if (openFileDialog.ShowDialog() == true)
-            {
-                var pathToFile = openFileDialog.FileName;
 
-                try
-                {
-                    using (FileStream fs = File.OpenRead(pathToFile))
-                    using (BinaryReader reader = new BinaryReader(fs))
-                    {
-                        string format = Encoding.ASCII.GetString(reader.ReadBytes(2));
-                        if (format != "P6")
-                        {
-                            MessageBox.Show("The PPM file is not in P6 format.");
-                            return;
-                        }
-
-                        string firstLine;
-                        int width = 0;
-                        int height = 0;
-                        int maxValue = 0;
-                        while ((firstLine = ReadLine(reader)) != null)
-                        {
-                            int commentIndex = firstLine.IndexOf('#');
-                            if (commentIndex >= 0)
-                            {
-                                firstLine = firstLine.Substring(0, commentIndex);
-                            }
-
-                            string[] tokens = firstLine.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-
-                            foreach (string token in tokens)
-                            {
-                                if (int.TryParse(token, out int value))
-                                {
-                                    if (width == 0)
-                                    {
-                                        width = value;
-                                    }
-                                    else if (height == 0)
-                                    {
-                                        height = value;
-                                    }
-                                    else if (maxValue == 0)
-                                    {
-                                        maxValue = value;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (maxValue > 0 && height > 0 && width > 0)
-                            {
-                                break;
-                            }
-                        }
-
-                        WriteableBitmap ppmBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-
-                        int dataSize = width * height * 3;
-                        byte[] pixelData = new byte[dataSize];
-                        int bytesRead = 0;
-
-                        while (bytesRead < dataSize)
-                        {
-                            int bytesToRead = Math.Min(dataSize - bytesRead, 4096);
-                            int bytesReadThisBlock = reader.Read(pixelData, bytesRead, bytesToRead);
-                            if (bytesReadThisBlock == 0)
-                            {
-                                break;
-                            }
-                            bytesRead += bytesReadThisBlock;
-                        }
-
-                        ppmBitmap.WritePixels(new Int32Rect(0, 0, width, height), pixelData, width * 3, 0);
-                        displayedImage.Source = ppmBitmap;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error loading the PPM image: " + ex.Message);
-                }
-            }
-        }
         private string ReadLine(BinaryReader reader)
         {
             List<byte> buffer = new List<byte>();

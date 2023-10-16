@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using Microsoft.VisualBasic;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -7,18 +8,10 @@ using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
-using System.Windows.Shapes;
-using static System.Formats.Asn1.AsnWriter;
-using static System.Net.Mime.MediaTypeNames;
 using Color = System.Drawing.Color;
 using Encoder = System.Drawing.Imaging.Encoder;
 using Point = System.Windows.Point;
@@ -56,12 +49,10 @@ namespace Grafika.Views
                     imageScale.ScaleX *= scaleChange;
                     imageScale.ScaleY *= scaleChange;
                     imageScaleFactor *= scaleChange;
-                    //LimitTranslation();
                     e.Handled = true;
                 }
             };
 
-            // Obsługa przesuwania obrazu przy użyciu myszki
             displayedImage.PreviewMouseLeftButtonDown += (sender, e) =>
             {
                 lastMousePosition = e.GetPosition(displayedImage);
@@ -84,7 +75,6 @@ namespace Grafika.Views
 
                     imageTranslate.X += deltaX;
                     imageTranslate.Y += deltaY;
-                    //LimitTranslation();
                 }
             };
 
@@ -109,7 +99,7 @@ namespace Grafika.Views
                     crop.CopyPixels(pixelData, 4, 0);
 
                     Color pixelColor = Color.FromArgb(pixelData[3], pixelData[0], pixelData[1], pixelData[2]);
-                    pixelInfoTextBlock.Text = $"R: {pixelColor.R}, G: {pixelColor.G}, B: {pixelColor.B} X:{x} Y: {y}";
+                    pixelInfoTextBlock.Text = $"R: {pixelColor.R}, G: {pixelColor.G}, B: {pixelColor.B}\nX: {x} Y: {y}";
                 }
             }
         }
@@ -129,11 +119,11 @@ namespace Grafika.Views
 
                     if (ppmFormat == "P3")
                     {
-                        LoadAndDisplayPPMP3(filePath, double.Parse(scaleTextBox.Text));
+                        LoadAndDisplayPPMP3(filePath);
                     }
                     else if (ppmFormat == "P6")
                     {
-                        LoadAndDisplayPPMP6(filePath, double.Parse(scaleTextBox.Text));
+                        LoadAndDisplayPPMP6(filePath);
                     }
                     else
                     {
@@ -153,7 +143,6 @@ namespace Grafika.Views
 
         private void LoadAndDisplayJPEG(string filePath)
         {
-            // Wczytywanie i wyświetlanie obrazu w formacie JPEG
             try
             {
                 BitmapImage image = new BitmapImage(new Uri(filePath));
@@ -198,7 +187,7 @@ namespace Grafika.Views
             }
         }
 
-        private void LoadAndDisplayPPMP3(string filePath, double scale)
+        private void LoadAndDisplayPPMP3(string filePath)
         {
             try
             {
@@ -211,7 +200,6 @@ namespace Grafika.Views
                     int height = 0;
                     int maxValue = 0;
                     string dimensionsLine;
-                    string line;
                     string tmp = string.Empty;
 
                     while ((dimensionsLine = reader.ReadLine()) != null)
@@ -242,28 +230,20 @@ namespace Grafika.Views
                                 }
                                 else
                                 {
-                                    tmp += token+'\n';
+                                    tmp += token + '\n';
                                 }
                             }
                         }
 
                         if (width > 0 && height > 0 && maxValue > 0)
                         {
-
                             break;
                         }
                     }
-                    //width = 300;
-                    //height = 200;
-                    //maxValue = 255;
-
-                    //Bitmap image = new Bitmap((int)(width * scale), (int)(height * scale));
-                    //string[,] allPixels = new string[height,width];
-                    WriteableBitmap image = new WriteableBitmap((int)(width * scale), (int)(height * scale), 96, 96, PixelFormats.Rgb24, null);
+                    WriteableBitmap image = new WriteableBitmap(width,height, 96, 96, PixelFormats.Rgb24, null);
                     int dataSize = width * height * 3;
                     List<byte> allPixels = new List<byte>();
-                    //int bytesRead = 0;
-                    
+
                     while (true)
                     {
                         char[] buffer = new char[4096];
@@ -274,7 +254,6 @@ namespace Grafika.Views
                             break;
                         }
 
-                        // Szukaj ostatniego znaku nowej linii "\n" w buforze
                         int lastNewlineIndex = -1;
                         string dataBlock = tmp + new string(buffer, 0, buffer.Length);
 
@@ -284,13 +263,8 @@ namespace Grafika.Views
                             dataBlock = tmp + new string(buffer, 0, lastNewlineIndex);
                         }
                         tmp = string.Empty;
-                        if (dataBlock.Contains("x"))
-                        {
-                            var a = 1;
-                        }
                         if (lastNewlineIndex >= 0)
                         {
-                            // Znaleziono znak nowej linii, zapisz końcówkę do zmiennej tmp
                             if (bytesRead - lastNewlineIndex - 1 > 0)
                                 tmp = new string(buffer, lastNewlineIndex + 1, bytesRead - lastNewlineIndex - 1);
                         }
@@ -312,13 +286,21 @@ namespace Grafika.Views
                             string[] tokens = l.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                             foreach (var token in tokens)
                             {
-                                allPixels.Add(byte.Parse(token));
+                                string value;
+                                if (maxValue > 255)
+                                {
+                                    double scalingFactor = 255.0 / maxValue;
+                                    value = ((int)(int.Parse(token) * scalingFactor)).ToString();
+                                }
+                                else
+                                {
+                                    value = token;
+                                }
+                                allPixels.Add(byte.Parse(value));
                             }
                         }
                     }
-                    int ind = 0;
                     var pixels = allPixels.ToArray();
-
                     image.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 3, 0);
                     displayedImage.Source = image;
                 }
@@ -331,7 +313,7 @@ namespace Grafika.Views
             }
         }
 
-        private void LoadAndDisplayPPMP6(string filePath, double scale)
+        private void LoadAndDisplayPPMP6(string filePath)
         {
             try
             {
@@ -344,7 +326,6 @@ namespace Grafika.Views
                     int height = 0;
                     int maxValue = 0;
                     string dimensionsLine;
-                    string line;
 
                     while ((dimensionsLine = ReadLine(reader)) != null)
                     {
@@ -382,8 +363,7 @@ namespace Grafika.Views
                         }
                     }
 
-                    //Bitmap image = new Bitmap((int)(width * scale), (int)(height * scale));
-                    WriteableBitmap image = new WriteableBitmap((int)(width * scale), (int)(height * scale), 96, 96, PixelFormats.Rgb24, null);
+                    WriteableBitmap image = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
                     int dataSize = width * height * 3;
                     byte[] allPixels = new byte[dataSize];
                     int bytesRead = 0;
@@ -412,7 +392,6 @@ namespace Grafika.Views
             }
         }
 
-
         private string ReadLine(BinaryReader reader)
         {
             List<byte> buffer = new List<byte>();
@@ -424,33 +403,6 @@ namespace Grafika.Views
             }
 
             return Encoding.ASCII.GetString(buffer.ToArray());
-        }
-
-        private ImageSource BitmapToImageSource(Bitmap bitmap)
-        {
-            MemoryStream memoryStream = new MemoryStream();
-            bitmap.Save(memoryStream, ImageFormat.Bmp);
-
-            BitmapImage bitmapImage = new BitmapImage();
-            bitmapImage.BeginInit();
-            bitmapImage.StreamSource = memoryStream;
-            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-            bitmapImage.EndInit();
-
-            return bitmapImage;
-        }
-
-        private ImageCodecInfo GetEncoderInfo(string mimeType)
-        {
-            ImageCodecInfo[] encoders = ImageCodecInfo.GetImageEncoders();
-            foreach (ImageCodecInfo encoder in encoders)
-            {
-                if (encoder.MimeType == mimeType)
-                {
-                    return encoder;
-                }
-            }
-            return null;
         }
 
         private string ReadPPMFormat(string filePath)

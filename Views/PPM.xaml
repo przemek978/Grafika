@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Grafika.Views"
         mc:Ignorable="d"
-        Title="PPM" Height="450" Width="800">
+        Title="PPM" Height="800" Width="1200">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"></ColumnDefinition>
@@ -18,12 +18,7 @@
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
             <Image x:Name="displayedImage"  MouseMove="OnImageMouseMove" Stretch="Fill" Grid.Row="0">
-                <!--<Image.LayoutTransform>
-                    <TransformGroup>
-                        <ScaleTransform ScaleX="1" ScaleY="1"/>
-                        <TranslateTransform X="0" Y="0"/>
-                    </TransformGroup>
-                </Image.LayoutTransform>-->
+
             </Image>
             <StackPanel Grid.Row="1" Background="White">
                 <TextBlock Name="pixelInfoTextBlock" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10"/>
@@ -37,8 +32,8 @@
                 <RowDefinition Height="1*"></RowDefinition>
             </Grid.RowDefinitions>
             <StackPanel>
-                <Label Content="Skala"/>
-                <TextBox x:Name="scaleTextBox" Text="1"/>
+                <!--<Label Content="Skala"/>
+                <TextBox x:Name="scaleTextBox" Text="1"/>-->
                 <Label Content="Poziom kompresji"/>
                 <TextBox x:Name="qualityTextBox"/>
             </StackPanel>

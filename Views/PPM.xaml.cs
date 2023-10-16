@@ -6,14 +6,12 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Security.AccessControl;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Color = System.Drawing.Color;
-using Encoder = System.Drawing.Imaging.Encoder;
 using Point = System.Windows.Point;
 
 namespace Grafika.Views
@@ -38,8 +36,6 @@ namespace Grafika.Views
             transformGroup.Children.Add(imageScale);
             transformGroup.Children.Add(imageTranslate);
             displayedImage.RenderTransform = transformGroup;
-
-            //Obsługa przesunięcia kółka myszki do zmiany skali
 
             displayedImage.PreviewMouseWheel += (sender, e) =>
             {
@@ -69,12 +65,16 @@ namespace Grafika.Views
                 if (displayedImage.IsMouseCaptured)
                 {
                     Point newPosition = e.GetPosition(displayedImage);
-                    double deltaX = newPosition.X - lastMousePosition.X;
-                    double deltaY = newPosition.Y - lastMousePosition.Y;
-                    lastMousePosition = newPosition;
+                    if (imageScale.ScaleX > 1 && imageScale.ScaleY > 1)
+                    {
+                        double deltaX = newPosition.X - lastMousePosition.X;
+                        double deltaY = newPosition.Y - lastMousePosition.Y;
+                        lastMousePosition = newPosition;
+                        imageTranslate.X += deltaX;
+                        imageTranslate.Y += deltaY;
 
-                    imageTranslate.X += deltaX;
-                    imageTranslate.Y += deltaY;
+                    }
+
                 }
             };
 
@@ -240,7 +240,7 @@ namespace Grafika.Views
                             break;
                         }
                     }
-                    WriteableBitmap image = new WriteableBitmap(width,height, 96, 96, PixelFormats.Rgb24, null);
+                    WriteableBitmap image = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
                     int dataSize = width * height * 3;
                     List<byte> allPixels = new List<byte>();
 

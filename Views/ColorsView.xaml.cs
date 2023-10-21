@@ -4,101 +4,45 @@ using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using Color = System.Windows.Media.Color;
 using System.Windows.Media.Imaging;
 using System.Reflection;
 using System.Windows.Input;
+using System.Windows.Media.Media3D;
+using HelixToolkit.Wpf;
+using Point = System.Windows.Point;
+using MDriven.WPF.Media3D;
+using System.Linq;
 
 namespace Grafika.Views
 {
     public partial class ColorsView : Window
     {
         private bool programmaticChange = false;
-        private System.Windows.Point previousPosition;
+
+        private ModelVisual3D modelVisual;
+        private double horizontalRotation = 0.0;
+        private double verticalRotation = 0.0;
         private bool isRotating = false;
-        private double currentRotation = 0.0;
+        private Point lastMousePos;
+
         public ColorsView()
         {
             InitializeComponent();
-            //CreateRGBCube();
+            CreateRGBCube();
 
-            // Dodaj kontrolę myszy do Viewport3D
-            //viewport3D.MouseDown += Viewport3D_MouseDown;
-            //viewport3D.MouseUp += Viewport3D_MouseUp;
-            //viewport3D.MouseMove += Viewport3D_MouseMove;
-
-            // Tworzenie nowej trójwymiarowej kostki
-            Model3DGroup cube = new Model3DGroup();
-            int sideLength = 10; // Długość boku kostki
-
-            for (int x = 0; x < sideLength; x++)
-            {
-                for (int y = 0; y < sideLength; y++)
-                {
-                    for (int z = 0; z < sideLength; z++)
-                    {
-                        Color color = Color.FromRgb((byte)(x * 255 / (sideLength)), (byte)(y * 255 / (sideLength)), (byte)(z * 255 / (sideLength)));
-                        DiffuseMaterial material = new DiffuseMaterial(new SolidColorBrush(color));
-                        GeometryModel3D model = new GeometryModel3D();
-                        model.Geometry = new MeshGeometry3D();
-                        material.Color = color;
-                        material.AmbientColor = color;
-                        model.Material = material;
-
-
-                        Point3D basePoint = new Point3D(x, y, z);
-                        double size = 1.0;
-
-                        ((MeshGeometry3D)model.Geometry).Positions = new Point3DCollection()
-                        {
-                            basePoint, basePoint + new Vector3D(size, 0, 0),
-                            basePoint + new Vector3D(size, size, 0), basePoint + new Vector3D(0, size, 0),
-                            basePoint + new Vector3D(0, 0, size), basePoint + new Vector3D(size, 0, size),
-                            basePoint + new Vector3D(size, size, size), basePoint + new Vector3D(0, size, size)
-                        };
-
-                        ((MeshGeometry3D)model.Geometry).TriangleIndices = new Int32Collection()
-                        {
-                            0, 1, 2, 0, 2, 3,
-                            4, 6, 5, 4, 7, 6,
-                            0, 4, 5, 0, 5, 1,
-                            1, 5, 6, 1, 6, 2,
-                            2, 6, 7, 2, 7, 3,
-                            3, 7, 4, 3, 4, 0
-                        };
-
-                        cube.Children.Add(model);
-                        if (x == 9 && y == 9 && z == 9)
-                        {
-                            convertedColor.Fill = new SolidColorBrush(color);
-                            colorCodeTextBlock.Text = "#" + color.R.ToString("X2") + color.G.ToString("X2") + color.B.ToString("X2");
-                        }
-                    }
-                }
-            }
-
-            ModelVisual3D modelVisual = new ModelVisual3D();
-            modelVisual.Content = cube;
-
-            Viewport3D viewport = new Viewport3D();
-            viewport.Children.Add(modelVisual);
-
-            Camera camera = new PerspectiveCamera(new Point3D(20, 20, 20), new Vector3D(-1, -1, -1), new Vector3D(0, 1, 0), 45);
-            viewport.Camera = camera;
-
-            Content = viewport;
-
+            viewport3D.RotateGesture = new MouseGesture(MouseAction.LeftClick);
+            viewport3D.PanGesture = new MouseGesture(MouseAction.RightClick);
+            viewport3D.ZoomGesture = new MouseGesture(MouseAction.MiddleClick);
+            viewport3D.CameraRotationMode = CameraRotationMode.Turntable;
+            viewport3D.MouseDown += Viewport3D_MouseDown;
+            viewport3D.MouseMove += Viewport3D_MouseMove;
+            viewport3D.MouseUp += Viewport3D_MouseUp;
         }
 
         private void RGBtoCMYK_Checked(object sender, RoutedEventArgs e)
         {
-            //if (RGBInputs != null && CMYKInputs != null)
-            //{
-            //    RGBInputs.Visibility = Visibility.Visible;
-            //    CMYKInputs.Visibility = Visibility.Collapsed;
-            //}
             if (RGBInputs != null && CMYKInputs != null)
             {
                 Grid.SetRow(RGBInputs, 1);
@@ -108,11 +52,6 @@ namespace Grafika.Views
 
         private void CMYKtoRGB_Checked(object sender, RoutedEventArgs e)
         {
-            //if (RGBInputs != null && CMYKInputs != null)
-            //{
-            //    CMYKInputs.Visibility = Visibility.Visible;
-            //    RGBInputs.Visibility = Visibility.Collapsed;
-            //}
             if (RGBInputs != null && CMYKInputs != null)
             {
                 Grid.SetRow(CMYKInputs, 1);
@@ -122,14 +61,12 @@ namespace Grafika.Views
 
         private void ColorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            // Obsługuje zmiany wartości suwaków RGB i CMYK
             if (!programmaticChange)
                 UpdateConvertedColor(false);
         }
 
         private void ColorTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // Obsługuje zmiany wartości TextBoxów RGB i CMYK
             if (!programmaticChange)
                 UpdateConvertedColor(true);
         }
@@ -143,7 +80,6 @@ namespace Grafika.Views
             {
                 if (RGBtoCMYK.IsChecked == true)
                 {
-                    // Konwersja z RGB do CMYK
                     if (!type)
                     {
                         programmaticChange = true;
@@ -158,9 +94,9 @@ namespace Grafika.Views
                     else
                     {
                         programmaticChange = true;
-                        red = int.Parse(redTextBox.Text);
-                        green = int.Parse(greenTextBox.Text);
-                        blue = int.Parse(blueTextBox.Text);
+                        int.TryParse(redTextBox.Text, out red);
+                        int.TryParse(greenTextBox.Text, out green);
+                        int.TryParse(blueTextBox.Text, out blue);
 
                         redSlider.Value = red;
                         greenSlider.Value = green;
@@ -171,15 +107,31 @@ namespace Grafika.Views
                     float g = green / 255.0f;
                     float b = blue / 255.0f;
 
-                    float k = 1 - Math.Max(Math.Max(r, g), b);
-                    float c = (1 - r - k) / (1 - k);
-                    float m = (1 - g - k) / (1 - k);
-                    float y = (1 - b - k) / (1 - k);
+                    float k = Math.Min(Math.Min(1 - r, 1 - g), 1 - b);
+                    float c, m, y;
+                    if (k < 1)
+                    {
+                        c = (1 - r - k) / (1 - k);
+                        m = (1 - g - k) / (1 - k);
+                        y = (1 - b - k) / (1 - k);
 
-                    cyanSlider.Value = c * 100;
-                    magentaSlider.Value = m * 100;
-                    yellowSlider.Value = y * 100;
-                    blackSlider.Value = k * 100;
+                        cyanSlider.Value = Math.Round(c * 100, 0);
+                        magentaSlider.Value = Math.Round(m * 100, 0);
+                        yellowSlider.Value = Math.Round(y * 100, 0);
+                    }
+                    else
+                    {
+                        cyanSlider.Value = 0;
+                        magentaSlider.Value = 0;
+                        yellowSlider.Value = 0;
+                    }
+                    blackSlider.Value = Math.Round(k * 100, 0);
+
+                    cyanTextBox.Text = cyanSlider.Value.ToString();
+                    magentaTextBox.Text = magentaSlider.Value.ToString();
+                    yellowTextBox.Text = yellowSlider.Value.ToString();
+                    blackTextBox.Text = blackSlider.Value.ToString();
+
 
                     SolidColorBrush brush = new SolidColorBrush(Color.FromRgb((byte)red, (byte)green, (byte)blue));
                     convertedColor.Fill = brush;
@@ -188,171 +140,96 @@ namespace Grafika.Views
                 }
                 else if (CMYKtoRGB.IsChecked == true)
                 {
-                    // Konwersja z CMYK do RGB
-                    double cyan = cyanSlider.Value;
-                    double magenta = magentaSlider.Value;
-                    double yellow = yellowSlider.Value;
-                    double black = blackSlider.Value;
+                    int cyan;
+                    int magenta;
+                    int yellow;
+                    int black;
 
-                    // Wykonaj konwersję i ustaw odpowiedni kolor w Rectangle (convertedColor)
-                    // Implementacja konwersji z CMYK do RGB
-
-
-                    // Aktualizacja koloru w Rectangle (convertedColor)
-                    // Tutaj można użyć innej implementacji konwersji z CMYK do RGB
-                    SolidColorBrush brush = new SolidColorBrush(Color.FromRgb(0, 255, 0)); // Przykładowy kolor
-                    convertedColor.Fill = brush;
-                }
-            }
-        }
-        public void ChangePixelColors(ModelVisual3D model, Color newColor)
-        {
-            if (model.Content is GeometryModel3D geometryModel)
-            {
-                if (geometryModel.Material is DiffuseMaterial diffuseMaterial)
-                {
-                    // Pobierz materiał
-                    ImageBrush imageBrush = (ImageBrush)diffuseMaterial.Brush;
-                    BitmapSource bitmapSource = (BitmapSource)imageBrush.ImageSource;
-
-                    int width = bitmapSource.PixelWidth;
-                    int height = bitmapSource.PixelHeight;
-
-                    FormatConvertedBitmap formattedBitmap = new FormatConvertedBitmap(bitmapSource, PixelFormats.Bgra32, null, 0);
-
-                    int stride = (width * formattedBitmap.Format.BitsPerPixel + 7) / 8;
-                    byte[] pixels = new byte[height * stride];
-                    formattedBitmap.CopyPixels(pixels, stride, 0);
-
-                    for (int y = 0; y < height; y++)
+                    if (!type)
                     {
-                        for (int x = 0; x < width; x++)
-                        {
-                            int index = y * stride + 4 * x;
-                            byte r = newColor.R;
-                            byte g = newColor.G;
-                            byte b = newColor.B;
+                        programmaticChange = true;
+                        cyan = (int)cyanSlider.Value;
+                        magenta = (int)magentaSlider.Value;
+                        yellow = (int)yellowSlider.Value;
+                        black = (int)blackSlider.Value;
+                        cyanTextBox.Text = cyan.ToString();
+                        magentaTextBox.Text = magenta.ToString();
+                        yellowTextBox.Text = yellow.ToString();
+                        blackTextBox.Text = black.ToString();
+                        programmaticChange = false;
+                    }
+                    else
+                    {
+                        programmaticChange = true;
+                        int.TryParse(cyanTextBox.Text, out cyan);
+                        int.TryParse(magentaTextBox.Text, out magenta);
+                        int.TryParse(yellowTextBox.Text, out yellow);
+                        int.TryParse(blackTextBox.Text, out black);
 
-                            pixels[index + 2] = r;
-                            pixels[index + 1] = g;
-                            pixels[index] = b;
-                        }
+                        cyanSlider.Value = cyan;
+                        magentaSlider.Value = magenta;
+                        yellowSlider.Value = yellow;
+                        blackSlider.Value = black;
+                        programmaticChange = false;
                     }
 
-                    WriteableBitmap modifiedBitmap = new WriteableBitmap(formattedBitmap);
-                    modifiedBitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
-                    imageBrush.ImageSource = modifiedBitmap;
+                    double c = cyan / 100.0;
+                    double m = magenta / 100.0;
+                    double y = yellow / 100.0;
+                    double k = black / 100.0;
+
+                    int r = (int)(255 * (1 - Math.Min(1, c * (1 - k) + k)));
+                    int g = (int)(255 * (1 - Math.Min(1, m * (1 - k) + k)));
+                    int b = (int)(255 * (1 - Math.Min(1, y * (1 - k) + k)));
+
+                    redSlider.Value = r;
+                    greenSlider.Value = g;
+                    blueSlider.Value = b;
+                    redTextBox.Text = r.ToString();
+                    greenTextBox.Text = g.ToString();
+                    blueTextBox.Text = b.ToString();
+
+                    SolidColorBrush brush = new SolidColorBrush(Color.FromRgb((byte)r, (byte)g, (byte)b));
+                    convertedColor.Fill = brush;
+                    colorCodeTextBlock.Text = "#" + ((byte)r).ToString("X2") + ((byte)g).ToString("X2") + ((byte)b).ToString("X2");
                 }
             }
         }
 
-        private void convert_Click(object sender, RoutedEventArgs e)
-        {
-            if (RGBtoCMYK.IsChecked == true)
-            {
-                int red = (int)redSlider.Value;
-                int green = (int)greenSlider.Value;
-                int blue = (int)blueSlider.Value;
-                float r = red / 255.0f;
-                float g = green / 255.0f;
-                float b = blue / 255.0f;
-
-                float k = 1 - Math.Max(Math.Max(r, g), b);
-                float c = (1 - r - k) / (1 - k);
-                float m = (1 - g - k) / (1 - k);
-                float y = (1 - b - k) / (1 - k);
-
-                cyanSlider.Value = c * 100;
-                magentaSlider.Value = m * 100;
-                yellowSlider.Value = y * 100;
-                blackSlider.Value = k * 100;
-
-                SolidColorBrush brush = new SolidColorBrush(Color.FromRgb((byte)red, (byte)green, (byte)blue));
-                convertedColor.Fill = brush;
-                colorCodeTextBlock.Text = "#" + red.ToString("X2") + green.ToString("X2") + blue.ToString("X2");
-
-            }
-            else
-            {
-
-            }
-        }
-
-        //private void slider1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        //{
-        //    double angle = slider1.Value; // Pobierz wartość z suwaka
-        //    RotateTransform3D rotateTransform = new RotateTransform3D();
-
-        //    // Obróć modele wokół osi Y
-        //    meshMain1.Transform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 1, 0), angle));
-        //    meshMain2.Transform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 1, 0), angle));
-        //    meshMain3.Transform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 1, 0), angle));
-        //    meshMain4.Transform = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 1, 0), angle));
-        //}
         private void CreateRGBCube()
         {
-            // Wymiary kostki
-            double width = 1.0;
-            double height = 1.0;
-            double depth = 1.0;
+            int sideLength = 10;
+            viewport3D.Children.Add(new DefaultLights());
 
-            // Przykładowe współrzędne wierzchołków
-            Point3D[] vertices = new Point3D[]
+            for (int x = 0; x < sideLength; x++)
             {
-        new Point3D(-0.5, -0.5, -0.5),
-        new Point3D(0.5, -0.5, -0.5),
-        new Point3D(0.5, 0.5, -0.5),
-        new Point3D(-0.5, 0.5, -0.5),
-        new Point3D(-0.5, -0.5, 0.5),
-        new Point3D(0.5, -0.5, 0.5),
-        new Point3D(0.5, 0.5, 0.5),
-        new Point3D(-0.5, 0.5, 0.5)
-            };
-
-            // Indeksy trójkątów definiujące ściany kostki
-            int[] triangleIndices = new int[]
-            {
-        0, 1, 2, 2, 3, 0, // Przód
-        3, 2, 6, 6, 7, 3, // Góra
-        7, 6, 5, 5, 4, 7, // Tył
-        4, 5, 1, 1, 0, 4, // Dół
-        1, 5, 6, 6, 2, 1, // Prawa
-        4, 0, 3, 3, 7, 4  // Lewa
-            };
-
-            Color[] colors = new Color[]
-            {
-        Colors.Red, Colors.Green, Colors.Blue, Colors.White, Colors.Yellow, Colors.Magenta
-            };
-
-            Model3DGroup modelGroup = new Model3DGroup();
-
-            for (int i = 0; i < 6; i++)
-            {
-                DiffuseMaterial diffuseMaterial = new DiffuseMaterial(new SolidColorBrush(colors[i]));
-
-                MeshGeometry3D mesh = new MeshGeometry3D();
-
-                for (int j = 0; j < 6; j++)
+                for (int y = 0; y < sideLength; y++)
                 {
-                    mesh.Positions.Add(vertices[triangleIndices[i * 6 + j]]);
+                    for (int z = 0; z < sideLength; z++)
+                    {
+                        Color color = Color.FromRgb((byte)(x * 255 /sideLength), (byte)(y * 255 / sideLength), (byte)(z * 255 / sideLength));
+                        var material = new DiffuseMaterial(new SolidColorBrush(color));
+
+                        var cube = new BoxVisual3D
+                        {
+                            Center = new Point3D(x, y, z),
+                            Length = 1.0,
+                            Width = 1.0,
+                            Height = 1.0,
+                            Material = material
+                        };
+                        viewport3D.Children.Add(cube);
+
+                    }
                 }
-
-                GeometryModel3D model = new GeometryModel3D(mesh, diffuseMaterial);
-                modelGroup.Children.Add(model);
             }
-
-            ModelVisual3D cubeModelVisual = new ModelVisual3D();
-            cubeModelVisual.Content = modelGroup;
-
-            viewport3D.Children.Add(cubeModelVisual);
         }
 
         private void Viewport3D_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                previousPosition = e.GetPosition(viewport3D);
+                lastMousePos = e.GetPosition(viewport3D);
                 isRotating = true;
             }
         }
@@ -362,100 +239,26 @@ namespace Grafika.Views
             isRotating = false;
         }
 
-        private void Viewport3D_MouseMove(object sender, MouseEventArgs e)
+        private void Viewport3D_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (isRotating)
+            if (isRotating && modelVisual != null)
             {
-                System.Windows.Point currentPosition = e.GetPosition(viewport3D);
-                double dx = currentPosition.X - previousPosition.X;
-                double dy = currentPosition.Y - previousPosition.Y;
+                Point currentMousePos = e.GetPosition(viewport3D);
+                double deltaX = currentMousePos.X - lastMousePos.X;
+                double deltaY = currentMousePos.Y - lastMousePos.Y;
+                lastMousePos = currentMousePos;
 
-                // Zastosuj obroty w oparciu o zmiany myszy
-                //RotateCamera(viewport3D.Camera as PerspectiveCamera,dx, dy);
-                // CreateRGBCube();
-                previousPosition = currentPosition;
+                horizontalRotation += deltaX;
+                verticalRotation += deltaY;
+
+                var rotationTransform = new RotateTransform3D(
+                    new AxisAngleRotation3D(new Vector3D(0, 1, 0), horizontalRotation),
+                    new Point3D(0, 0, 0)
+                );
+
+                modelVisual.Transform = rotationTransform;
             }
         }
-
-        private void RotateCamera(PerspectiveCamera camera, double dx, double dy, double dz)
-        {
-            double rotationSpeed = 0.5;
-            double radiansX = dx * rotationSpeed * Math.PI / 180.0;
-            double radiansY = dy * rotationSpeed * Math.PI / 180.0;
-
-            Matrix3D rotation = new Matrix3D();
-            rotation.Rotate(new Quaternion(camera.UpDirection, radiansX));
-            rotation.Rotate(new Quaternion(camera.LookDirection, radiansY));
-
-            camera.LookDirection = rotation.Transform(camera.LookDirection);
-            camera.UpDirection = rotation.Transform(camera.UpDirection);
-        }
-
-        private void slider1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-
-        }
-        //private void rGBCubeToolStripMenuItem_Click(object sender, EventArgs e)
-        //{
-        //    var bmp = pictureBox1.Source== null ? new Bitmap((int)pictureBox1.Width, (int)pictureBox1.Height) : new Bitmap(pictureBox1);
-        //    //var bmp = pictureBox1.Source== null ? new Bitmap((int)pictureBox1.Width, (int)pictureBox1.Height) : new Bitmap(pictureBox1);
-
-        //    Graphics gc = Graphics.FromImage(bmp);
-
-        //    gc.DrawLine(Pens.Black, 0, 127, 255, 127); //gora przod
-        //    gc.DrawLine(Pens.Black, 127, 0, 382, 0); // gora tyl
-        //    gc.DrawLine(Pens.Black, 0, 127, 127, 0); // laczenie gora lewa
-        //    gc.DrawLine(Pens.Black, 255, 127, 382, 0); // laczenie gora prawa
-        //    gc.DrawLine(Pens.Black, 0, 382, 0, 127); // laczenie lewy bok przod
-        //    gc.DrawLine(Pens.Black, 0, 382, 255, 382); // laczenie dol		
-        //    gc.DrawLine(Pens.Black, 255, 127, 255, 382); // laczenie prawy bok przod
-        //    gc.DrawLine(Pens.Black, 382, 255, 382, 0); // laczenie prawy bok tyl
-        //    gc.DrawLine(Pens.Black, 255, 382, 382, 255); // laczenie dol prawy
-        //    pictureBox1.Source = bmp;
-
-        //    int R = 255, G = 1, B = 255;
-        //    for (int j = 128; j < 382; j++)
-        //    {
-        //        for (int i = 1; i < 255; i++)
-        //        {
-        //            bmp.SetPixel(i, j, Color.FromArgb(255, R, G, B));
-        //            G++;
-        //        }
-        //        R--;
-        //        G = 1;
-        //    }
-        //    R = 255;
-        //    G = 1;
-        //    B = 1;
-        //    int x = 127;
-        //    for (int i = 1; i < 127; i++)
-        //    {
-        //        for (int j = 0; j < 254; j++)
-        //        {
-        //            bmp.SetPixel(j + x, i, Color.FromArgb(255, R, G, B));
-        //            G++;
-        //        }
-        //        B = B + 2;
-        //        G = 1;
-        //        x--;
-        //    }
-        //    G = 255;
-        //    R = 255;
-        //    B = 255;
-        //    x = 127;
-        //    int x1 = 255;
-        //    for (int i = 1; i < 127; i++)
-        //    {
-        //        for (int j = 0; j < 254; j++)
-        //        {
-        //            bmp.SetPixel(i + x1, j + x, Color.FromArgb(255, R, G, B));
-        //            R--;
-        //        }
-        //        x--;
-        //        B = B - 2;
-        //        R = 255;
-        //    }
-        //}
 
     }
 }

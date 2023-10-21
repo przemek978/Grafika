@@ -23,7 +23,6 @@ namespace Grafika.Views
     {
         private TranslateTransform imageTranslate;
         private ScaleTransform imageScale;
-        private double imageScaleFactor = 1.0;
         private Point lastMousePosition;
 
         public PPM()
@@ -44,7 +43,6 @@ namespace Grafika.Views
                     double scaleChange = e.Delta > 0 ? 1.1 : 0.9;
                     imageScale.ScaleX *= scaleChange;
                     imageScale.ScaleY *= scaleChange;
-                    imageScaleFactor *= scaleChange;
                     e.Handled = true;
                 }
             };

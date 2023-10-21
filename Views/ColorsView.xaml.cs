@@ -22,12 +22,74 @@ namespace Grafika.Views
         public ColorsView()
         {
             InitializeComponent();
-            CreateRGBCube();
+            //CreateRGBCube();
 
             // Dodaj kontrolę myszy do Viewport3D
-            viewport3D.MouseDown += Viewport3D_MouseDown;
-            viewport3D.MouseUp += Viewport3D_MouseUp;
-            viewport3D.MouseMove += Viewport3D_MouseMove;
+            //viewport3D.MouseDown += Viewport3D_MouseDown;
+            //viewport3D.MouseUp += Viewport3D_MouseUp;
+            //viewport3D.MouseMove += Viewport3D_MouseMove;
+
+            // Tworzenie nowej trójwymiarowej kostki
+            Model3DGroup cube = new Model3DGroup();
+            int sideLength = 10; // Długość boku kostki
+
+            for (int x = 0; x < sideLength; x++)
+            {
+                for (int y = 0; y < sideLength; y++)
+                {
+                    for (int z = 0; z < sideLength; z++)
+                    {
+                        Color color = Color.FromRgb((byte)(x * 255 / (sideLength)), (byte)(y * 255 / (sideLength)), (byte)(z * 255 / (sideLength)));
+                        DiffuseMaterial material = new DiffuseMaterial(new SolidColorBrush(color));
+                        GeometryModel3D model = new GeometryModel3D();
+                        model.Geometry = new MeshGeometry3D();
+                        material.Color = color;
+                        material.AmbientColor = color;
+                        model.Material = material;
+
+
+                        Point3D basePoint = new Point3D(x, y, z);
+                        double size = 1.0;
+
+                        ((MeshGeometry3D)model.Geometry).Positions = new Point3DCollection()
+                        {
+                            basePoint, basePoint + new Vector3D(size, 0, 0),
+                            basePoint + new Vector3D(size, size, 0), basePoint + new Vector3D(0, size, 0),
+                            basePoint + new Vector3D(0, 0, size), basePoint + new Vector3D(size, 0, size),
+                            basePoint + new Vector3D(size, size, size), basePoint + new Vector3D(0, size, size)
+                        };
+
+                        ((MeshGeometry3D)model.Geometry).TriangleIndices = new Int32Collection()
+                        {
+                            0, 1, 2, 0, 2, 3,
+                            4, 6, 5, 4, 7, 6,
+                            0, 4, 5, 0, 5, 1,
+                            1, 5, 6, 1, 6, 2,
+                            2, 6, 7, 2, 7, 3,
+                            3, 7, 4, 3, 4, 0
+                        };
+
+                        cube.Children.Add(model);
+                        if (x == 9 && y == 9 && z == 9)
+                        {
+                            convertedColor.Fill = new SolidColorBrush(color);
+                            colorCodeTextBlock.Text = "#" + color.R.ToString("X2") + color.G.ToString("X2") + color.B.ToString("X2");
+                        }
+                    }
+                }
+            }
+
+            ModelVisual3D modelVisual = new ModelVisual3D();
+            modelVisual.Content = cube;
+
+            Viewport3D viewport = new Viewport3D();
+            viewport.Children.Add(modelVisual);
+
+            Camera camera = new PerspectiveCamera(new Point3D(20, 20, 20), new Vector3D(-1, -1, -1), new Vector3D(0, 1, 0), 45);
+            viewport.Camera = camera;
+
+            Content = viewport;
+
         }
 
         private void RGBtoCMYK_Checked(object sender, RoutedEventArgs e)
@@ -310,12 +372,12 @@ namespace Grafika.Views
 
                 // Zastosuj obroty w oparciu o zmiany myszy
                 //RotateCamera(viewport3D.Camera as PerspectiveCamera,dx, dy);
-               // CreateRGBCube();
+                // CreateRGBCube();
                 previousPosition = currentPosition;
             }
         }
 
-        private void RotateCamera(PerspectiveCamera camera, double dx, double dy,double dz)
+        private void RotateCamera(PerspectiveCamera camera, double dx, double dy, double dz)
         {
             double rotationSpeed = 0.5;
             double radiansX = dx * rotationSpeed * Math.PI / 180.0;

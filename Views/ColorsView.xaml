@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Grafika.Views" xmlns:h="http://helix-toolkit.org/wpf"
         mc:Ignorable="d"
-        Title="Colors" Height="700" Width="700" MinHeight="700" MinWidth="700">
+        Title="Colors" Height="700" Width="1000" MinHeight="700" MinWidth="700">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="2*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid Name="colorConversionPanel" Grid.Column="0" Margin="10">
             <Grid.RowDefinitions>
@@ -20,12 +20,12 @@
             </Grid.RowDefinitions>
             <StackPanel>
                 <TextBlock Text="Color Conversion" FontWeight="Bold" FontSize="16"/>
-                <RadioButton Content="RGB to CMYK" x:Name="RGBtoCMYK" Checked="RGBtoCMYK_Checked" IsChecked="True"/>
-                <RadioButton Content="CMYK to RGB" x:Name="CMYKtoRGB" Checked="CMYKtoRGB_Checked"/>
+                <RadioButton Content="RGB na CMYK" x:Name="RGBtoCMYK" Checked="RGBtoCMYK_Checked" IsChecked="True"/>
+                <RadioButton Content="CMYK na RGB" x:Name="CMYKtoRGB" Checked="CMYKtoRGB_Checked"/>
             </StackPanel>
 
             <StackPanel Grid.Row="1" Name="RGBInputs" Margin="0,10">
-                <TextBlock Text="RGB" FontWeight="Bold"/>
+                <TextBlock Text="RGB" FontWeight="Bold" FontSize="20" TextAlignment="Center"/>
                 <Slider Name="redSlider" Value="0" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
                 <Slider Name="greenSlider" Value="0" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
                 <Slider Name="blueSlider" Value="0" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
@@ -39,7 +39,7 @@
                 </StackPanel>
             </StackPanel>
             <StackPanel Grid.Row="2" Name="CMYKInputs" Margin="0,10" >
-                <TextBlock Text="CMYK" FontWeight="Bold"/>
+                <TextBlock Text="CMYK" FontWeight="Bold" FontSize="20" TextAlignment="Center"/>
                 <Slider Name="cyanSlider" Value="0" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
                 <Slider Name="magentaSlider" Value="0" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
                 <Slider Name="yellowSlider" Value="0" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="ColorSlider_ValueChanged"/>
@@ -56,12 +56,12 @@
                 </StackPanel>
             </StackPanel>
             <StackPanel Grid.Row="3">
-                <TextBlock Text="Converted Color" FontWeight="Bold" Margin="0,10"/>
+                <TextBlock Text="Kolor" FontWeight="Bold" Margin="0,10" TextAlignment="Center" FontSize="20"/>
                 <Rectangle Name="convertedColor" Width="50" Height="50" Margin="0,5"/>
                 <TextBlock x:Name="colorCodeTextBlock" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
             </StackPanel>
         </Grid>
-        <h:HelixViewport3D x:Name="viewport3D" Grid.Column="1" CameraRotationMode="Trackball" 
+        <h:HelixViewport3D x:Name="viewport3D" Grid.Column="1"
                        IsZoomEnabled="True" >
         </h:HelixViewport3D>
     </Grid>

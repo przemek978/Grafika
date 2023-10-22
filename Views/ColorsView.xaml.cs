@@ -207,7 +207,7 @@ namespace Grafika.Views
                 {
                     for (int z = 0; z < sideLength; z++)
                     {
-                        Color color = Color.FromRgb((byte)(x * 255 /sideLength), (byte)(y * 255 / sideLength), (byte)(z * 255 / sideLength));
+                        Color color = Color.FromRgb((byte)(x * 255 / sideLength), (byte)(y * 255 / sideLength), (byte)(z * 255 / sideLength));
                         var material = new DiffuseMaterial(new SolidColorBrush(color));
 
                         var cube = new BoxVisual3D

@@ -319,5 +319,14 @@ namespace Grafika.Views
             }
         }
 
+        private void TransformRadio_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void FiltersRadio_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

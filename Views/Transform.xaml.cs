@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Grafika.Views
 {
@@ -21,6 +23,7 @@ namespace Grafika.Views
     /// </summary>
     public partial class Transform : Window
     {
+        private BitmapImage originalImage;
         public Transform()
         {
             InitializeComponent();
@@ -29,30 +32,13 @@ namespace Grafika.Views
         private void LoadImage_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Pliki PPM|*.ppm|Pliki JPEG|*.jpg;*.jpeg";
+            openFileDialog.Filter = "Pliki JPEG|*.jpg;*.jpeg";
 
             if (openFileDialog.ShowDialog() == true)
             {
                 string filePath = openFileDialog.FileName;
 
-                if (filePath.EndsWith(".ppm", StringComparison.OrdinalIgnoreCase))
-                {
-                    string ppmFormat = ReadPPMFormat(filePath);
-
-                    if (ppmFormat == "P3")
-                    {
-                        LoadAndDisplayPPMP3(filePath);
-                    }
-                    else if (ppmFormat == "P6")
-                    {
-                        LoadAndDisplayPPMP6(filePath);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Nieobsługiwany format PPM.");
-                    }
-                }
-                else if (filePath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+                if (filePath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
                 {
                     LoadAndDisplayJPEG(filePath);
                 }
@@ -68,6 +54,7 @@ namespace Grafika.Views
             try
             {
                 BitmapImage image = new BitmapImage(new Uri(filePath));
+                originalImage = image;
                 displayedImage.Source = image;
             }
             catch (Exception ex)
@@ -75,251 +62,262 @@ namespace Grafika.Views
                 MessageBox.Show("Błąd podczas wczytywania pliku JPEG: " + ex.Message);
             }
         }
-
-        private void LoadAndDisplayPPMP3(string filePath)
+        private void ApplyAddition_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (double.TryParse(ValueTextBox.Text, out double value))
             {
-                using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-                using (StreamReader reader = new StreamReader(fs))
+                ApplyArithmeticOperation(value);
+            }
+            else
+            {
+                MessageBox.Show("Podaj wartość operacji");
+            }
+        }
+
+        private void ApplySubtraction_Click(object sender, RoutedEventArgs e)
+        {
+            if (double.TryParse(ValueTextBox.Text, out double value))
+            {
+                ApplyArithmeticOperation(-value);
+            }
+            else
+            {
+                MessageBox.Show("Podaj wartość operacji");
+            }
+        }
+
+        private void ApplyMultiplication_Click(object sender, RoutedEventArgs e)
+        {
+            if (double.TryParse(ValueTextBox.Text, out double value))
+            {
+                ApplyArithmeticOperation(value,true);
+            }
+            else
+            {
+                MessageBox.Show("Podaj wartość operacji");
+            }
+        }
+
+        private void ApplyDivision_Click(object sender, RoutedEventArgs e)
+        {
+            if (double.TryParse(ValueTextBox.Text, out double value) && value != 0)
+            {
+                ApplyArithmeticOperation(1.0 / value,true);
+            }
+            else
+            {
+                MessageBox.Show("Podaj wartość operacji");
+            }
+        }
+
+        private void ApplyBrightness_Click(object sender, RoutedEventArgs e)
+        {
+            if (double.TryParse(ValueTextBox.Text, out double value))
+            {
+                ApplyBrightness(value); // Zmiana jasności
+            }
+            else
+            {
+                MessageBox.Show("Podaj wartość operacji");
+            }
+        }
+
+        private void ApplyGrayscale_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyToGrayscale();
+        }  
+        
+        private void ApplyGrayscale2_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyToGrayscaleAlternative();
+        }
+
+        private void ApplyArithmeticOperation(double factor, bool isMultiplication = false)
+        {
+            if (originalImage != null)
+            {
+                int width = originalImage.PixelWidth;
+                int height = originalImage.PixelHeight;
+
+                int stride = width * 4;
+                byte[] pixelData = new byte[height * stride];
+                originalImage.CopyPixels(pixelData, stride, 0);
+
+                for (int y = 0; y < height; y++)
                 {
-                    string format = reader.ReadLine();
-
-                    int width = 0;
-                    int height = 0;
-                    int maxValue = 0;
-                    string dimensionsLine;
-                    string tmp = string.Empty;
-
-                    while ((dimensionsLine = reader.ReadLine()) != null)
+                    for (int x = 0; x < width; x++)
                     {
-                        int commentIndex = dimensionsLine.IndexOf('#');
-                        if (commentIndex >= 0)
+                        int offset = y * stride + x * 4;
+
+                        byte newR, newG, newB;
+                        if (isMultiplication)
                         {
-                            dimensionsLine = dimensionsLine.Substring(0, commentIndex);
+                            newR = (byte)Math.Max(0, Math.Min(255, pixelData[offset + 2] * factor));
+                            newG = (byte)Math.Max(0, Math.Min(255, pixelData[offset + 1] * factor));
+                            newB = (byte)Math.Max(0, Math.Min(255, pixelData[offset] * factor));
+                        }
+                        else
+                        {
+                            newR = (byte)Math.Max(0, Math.Min(255, pixelData[offset + 2] + factor));
+                            newG = (byte)Math.Max(0, Math.Min(255, pixelData[offset + 1] + factor));
+                            newB = (byte)Math.Max(0, Math.Min(255, pixelData[offset] + factor));
                         }
 
-                        string[] tokens = dimensionsLine.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
 
-                        foreach (string token in tokens)
-                        {
-                            if (int.TryParse(token, out int value))
-                            {
-                                if (width == 0)
-                                {
-                                    width = value;
-                                }
-                                else if (height == 0)
-                                {
-                                    height = value;
-                                }
-                                else if (maxValue == 0)
-                                {
-                                    maxValue = value;
-                                }
-                                else
-                                {
-                                    tmp += token + '\n';
-                                }
-                            }
-                        }
-
-                        if (width > 0 && height > 0 && maxValue > 0)
-                        {
-                            break;
-                        }
+                        pixelData[offset + 2] = newR;
+                        pixelData[offset + 1] = newG;
+                        pixelData[offset] = newB;
                     }
-                    WriteableBitmap image = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-                    int dataSize = width * height * 3;
-                    List<byte> allPixels = new List<byte>();
-
-                    while (true)
-                    {
-                        char[] buffer = new char[4096];
-                        int bytesRead = reader.ReadBlock(buffer, 0, buffer.Length);
-
-                        if (bytesRead == 0)
-                        {
-                            break;
-                        }
-
-                        int lastNewlineIndex = -1;
-                        string dataBlock = tmp + new string(buffer, 0, buffer.Length);
-
-                        if (Array.LastIndexOf(buffer, '\n') != 4095)
-                        {
-                            lastNewlineIndex = Array.LastIndexOf(buffer, '\n');
-                            dataBlock = tmp + new string(buffer, 0, lastNewlineIndex);
-                        }
-                        tmp = string.Empty;
-                        if (lastNewlineIndex >= 0)
-                        {
-                            if (bytesRead - lastNewlineIndex - 1 > 0)
-                                tmp = new string(buffer, lastNewlineIndex + 1, bytesRead - lastNewlineIndex - 1);
-                        }
-
-                        if (dataBlock.Contains('#'))
-                        {
-                            while (dataBlock.Contains('#'))
-                            {
-                                dataBlock = removeComments(dataBlock);
-                            }
-                        }
-
-                        dataBlock = removeComments(dataBlock);
-
-                        string[] lines = dataBlock.Split(new string[] { "\n" }, StringSplitOptions.None);
-
-                        foreach (var l in lines)
-                        {
-                            string[] tokens = l.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                            foreach (var token in tokens)
-                            {
-                                string value;
-                                if (maxValue > 255)
-                                {
-                                    double scalingFactor = 255.0 / maxValue;
-                                    value = ((int)(int.Parse(token) * scalingFactor)).ToString();
-                                }
-                                else
-                                {
-                                    value = token;
-                                }
-                                allPixels.Add(byte.Parse(value));
-                            }
-                        }
-                    }
-                    var pixels = allPixels.ToArray();
-                    image.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 3, 0);
-                    displayedImage.Source = image;
                 }
 
-
+                BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
+                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                displayedImage.Source = processedBitmap;
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show("Błąd podczas otwierania pliku: " + ex.Message);
+                MessageBox.Show("Najpierw wczytaj obraz.");
             }
         }
 
-        private void LoadAndDisplayPPMP6(string filePath)
+
+        private void ApplyBrightness(double brightnessFactor)
         {
-            try
+            if (originalImage != null)
             {
-                using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-                using (BinaryReader reader = new BinaryReader(fs))
+                int width = originalImage.PixelWidth;
+                int height = originalImage.PixelHeight;
+
+                int stride = width * 4;
+                byte[] pixelData = new byte[height * stride];
+                originalImage.CopyPixels(pixelData, stride, 0);
+
+                for (int y = 0; y < height; y++)
                 {
-                    string format = Encoding.ASCII.GetString(reader.ReadBytes(2));
-
-                    int width = 0;
-                    int height = 0;
-                    int maxValue = 0;
-                    string dimensionsLine;
-
-                    while ((dimensionsLine = ReadLine(reader)) != null)
+                    for (int x = 0; x < width; x++)
                     {
-                        int commentIndex = dimensionsLine.IndexOf('#');
-                        if (commentIndex >= 0)
-                        {
-                            dimensionsLine = dimensionsLine.Substring(0, commentIndex);
-                        }
+                        int offset = y * stride + x * 4;
 
-                        string[] tokens = dimensionsLine.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                        byte newR = (byte)Math.Max(0, Math.Min(255, pixelData[offset + 2] + brightnessFactor));
+                        byte newG = (byte)Math.Max(0, Math.Min(255, pixelData[offset + 1] + brightnessFactor));
+                        byte newB = (byte)Math.Max(0, Math.Min(255, pixelData[offset] + brightnessFactor));
 
-                        foreach (string token in tokens)
-                        {
-                            if (int.TryParse(token, out int value))
-                            {
-                                if (width == 0)
-                                {
-                                    width = value;
-                                }
-                                else if (height == 0)
-                                {
-                                    height = value;
-                                }
-                                else if (maxValue == 0)
-                                {
-                                    maxValue = value;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (width > 0 && height > 0 && maxValue > 0)
-                        {
-                            break;
-                        }
+                        pixelData[offset + 2] = newR;
+                        pixelData[offset + 1] = newG;
+                        pixelData[offset] = newB;
                     }
+                }
 
-                    WriteableBitmap image = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-                    int dataSize = width * height * 3;
-                    byte[] allPixels = new byte[dataSize];
-                    int bytesRead = 0;
+                BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
+                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                displayedImage.Source = processedBitmap;
+            }
+            else
+            {
+                MessageBox.Show("Najpierw wczytaj obraz.");
+            }
+        }
 
-                    char[] buffer = new char[4096];
+        private void ApplyToGrayscale()
+        {
+            if (originalImage != null)
+            {
+                int width = originalImage.PixelWidth;
+                int height = originalImage.PixelHeight;
 
-                    while (bytesRead < dataSize)
+                int stride = width * 4;
+                byte[] pixelData = new byte[height * stride];
+                originalImage.CopyPixels(pixelData, stride, 0);
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
                     {
-                        int bytesToRead = Math.Min(dataSize - bytesRead, 4096);
-                        int bytesReadThisBlock = reader.Read(allPixels, bytesRead, bytesToRead);
-                        if (bytesReadThisBlock == 0)
-                        {
-                            break;
-                        }
-                        bytesRead += bytesReadThisBlock;
+                        int offset = y * stride + x * 4;
+
+                        byte grayValue = (byte)((pixelData[offset + 2] + pixelData[offset + 1] + pixelData[offset]) / 3);
+
+                        pixelData[offset + 2] = grayValue;
+                        pixelData[offset + 1] = grayValue;
+                        pixelData[offset] = grayValue;
                     }
-                    image.WritePixels(new Int32Rect(0, 0, width, height), allPixels, width * 3, 0);
+                }
 
-                    displayedImage.Source = image;
+                BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
+                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                displayedImage.Source = processedBitmap;
+            }
+            else
+            {
+                MessageBox.Show("Najpierw wczytaj obraz.");
+            }
 
+        }
+
+        private void ApplyToGrayscaleAlternative()
+        {
+            if (originalImage != null)
+            {
+                int width = originalImage.PixelWidth;
+                int height = originalImage.PixelHeight;
+
+                int stride = width * 4;
+                byte[] pixelData = new byte[height * stride];
+                originalImage.CopyPixels(pixelData, stride, 0);
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        int offset = y * stride + x * 4;
+
+                        byte grayValue = (byte)(0.299 * pixelData[offset + 2] + 0.587 * pixelData[offset + 1] + 0.114 * pixelData[offset]);
+
+                        pixelData[offset + 2] = grayValue;
+                        pixelData[offset + 1] = grayValue;
+                        pixelData[offset] = grayValue; 
+                    }
+                }
+
+                BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
+                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                displayedImage.Source = processedBitmap;
+            }
+            else
+            {
+                MessageBox.Show("Najpierw wczytaj obraz.");
+            }
+        }
+
+
+        public BitmapImage ConvertBitmapSourceToBitmapImage(BitmapSource bitmapSource)
+        {
+            if (bitmapSource != null)
+            {
+                BitmapImage bitmapImage = new BitmapImage();
+
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    BitmapEncoder encoder = new PngBitmapEncoder(); // Możesz dostosować format do swoich potrzeb
+                    encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
+                    encoder.Save(memoryStream);
+
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+
+                    bitmapImage.BeginInit();
+                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmapImage.StreamSource = memoryStream;
+                    bitmapImage.EndInit();
+
+                    return bitmapImage;
                 }
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show("Błąd podczas otwierania pliku: " + ex.Message);
-            }
-        }
-
-
-        private string ReadLine(BinaryReader reader)
-        {
-            List<byte> buffer = new List<byte>();
-            byte currentByte;
-
-            while ((currentByte = reader.ReadByte()) != 10) // 10 is the ASCII code for newline
-            {
-                buffer.Add(currentByte);
-            }
-
-            return Encoding.ASCII.GetString(buffer.ToArray());
-        }
-
-        private string ReadPPMFormat(string filePath)
-        {
-            using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            using (StreamReader reader = new StreamReader(fs))
-            {
-                return reader.ReadLine().Trim();
-            }
-        }
-
-        private string removeComments(string line)
-        {
-            int commentIndex = line.IndexOf('#');
-            if (commentIndex == 0)
-            {
+                MessageBox.Show("Wystąpił błąd");
                 return null;
             }
-            if (commentIndex >= 0)
-            {
-                var endcomment = line.Substring(commentIndex);
-                var endcommentIndex = endcomment.IndexOf("\n");
-                var tmp = line.Substring(0, commentIndex);
-                var tmp2 = endcomment.Substring(endcommentIndex);
-                line = tmp + tmp2;
-            }
-            return line;
         }
+
     }
 }

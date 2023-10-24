@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Transform = Grafika.Views.Transform;
 
 namespace Grafika
 {
@@ -44,6 +45,13 @@ namespace Grafika
         {
             ColorsView colors = new ColorsView();
             colors.Show();
+            this.Hide();
+        }
+
+        private void Transform_Click(object sender, RoutedEventArgs e)
+        {
+            Transform transform = new Transform();
+            transform.Show();
             this.Hide();
         }
     }

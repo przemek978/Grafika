@@ -11,7 +11,6 @@
             <ColumnDefinition Width="2*"></ColumnDefinition>
             <ColumnDefinition  Width="auto"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <!--<ScrollViewer Name="imageScrollViewer">-->
         <Grid Grid.Column="0">
             <Image x:Name="displayedImage" Stretch="Fill">
 
@@ -19,44 +18,77 @@
         </Grid>
         <Grid Grid.Column="1" Background="White">
             <Grid.RowDefinitions>
-                <RowDefinition Height="0.9*"></RowDefinition>
                 <RowDefinition Height="1*"></RowDefinition>
                 <RowDefinition Height="1*"></RowDefinition>
+                <RowDefinition Height="4*"></RowDefinition>
                 <RowDefinition Height="1*"></RowDefinition>
-                <RowDefinition Height="1*"></RowDefinition>
-                <RowDefinition Height="0.5*"></RowDefinition>
             </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"></ColumnDefinition>
-                <ColumnDefinition Width="*"></ColumnDefinition>
-            </Grid.ColumnDefinitions>
             <TextBlock Text="Typ" FontWeight="Bold" FontSize="16" Margin="5,0,0,0"/>
             <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
                 <RadioButton Content="Przekształcenia" x:Name="TransformRadio"  IsChecked="True" Checked="TransformRadio_Checked" Margin="5,0,5,0"/>
-                <RadioButton Content="FIltry" x:Name="FiltersRadio" Checked="FiltersRadio_Checked"/>
+                <RadioButton Content="Filtry" x:Name="FiltersRadio" Checked="FiltersRadio_Checked"/>
             </StackPanel>
-            <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Content="Wczytaj obraz" Click="LoadImage_Click" />
-            <Button Grid.Row="2" Grid.Column="0" Content="Dodawanie" Click="ApplyAddition_Click" />
-            <Button Grid.Row="2" Grid.Column="1" Content="Odejmowanie" Click="ApplySubtraction_Click" />
-            <Button Grid.Row="3" Grid.Column="0" Content="Mnożenie" Click="ApplyMultiplication_Click" />
-            <Button Grid.Row="3" Grid.Column="1" Content="Dzielenie" Click="ApplyDivision_Click" />
-            <Button Grid.Row="4" Grid.Column="0" Content="Zmiana jasności" Click="ApplyBrightness_Click" />
-            <Grid Grid.Row="4" Grid.Column="1" >
+            <Button Grid.Row="1" Grid.Column="0" Content="Wczytaj obraz" Click="LoadImage_Click" />
+            <!--Transform-->
+            <Grid Grid.Row="2" x:Name="transformGrid">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="1*"></RowDefinition>
-                    <RowDefinition Height="3*"></RowDefinition>
+                    <RowDefinition Height="1*"></RowDefinition>
+                    <RowDefinition Height="1*"></RowDefinition>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Skala szarości" Grid.ColumnSpan="2" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" TextAlignment="Center"></TextBlock>
-                <Button Grid.Column="0" Grid.Row="1" Content="1" Click="ApplyGrayscale_Click" />
-                <Button Grid.Column="1" Grid.Row="1" Content="2" Click="ApplyGrayscale2_Click" />
+
+                <Button Grid.Row="0" Grid.Column="0" Content="Dodawanie" Click="ApplyAddition_Click" />
+                <Button Grid.Row="0" Grid.Column="1" Content="Odejmowanie" Click="ApplySubtraction_Click" />
+                <Button Grid.Row="1" Grid.Column="0" Content="Mnożenie" Click="ApplyMultiplication_Click" />
+                <Button Grid.Row="1" Grid.Column="1" Content="Dzielenie" Click="ApplyDivision_Click" />
+                <Button Grid.Row="2" Grid.Column="0" Content="Zmiana jasności" Click="ApplyBrightness_Click" />
+                <Grid Grid.Row="2" Grid.Column="1" >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"></RowDefinition>
+                        <RowDefinition Height="3*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Skala szarości" Grid.ColumnSpan="2" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" TextAlignment="Center"></TextBlock>
+                    <Button Grid.Column="0" Grid.Row="1" Content="1" Click="ApplyGrayscale_Click" />
+                    <Button Grid.Column="1" Grid.Row="1" Content="2" Click="ApplyGrayscale2_Click" />
+                </Grid>
+            </Grid>
+            <!--Filters-->
+            <Grid Grid.Row="2" Grid.RowSpan="2" x:Name="filtersGrid" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*"></RowDefinition>
+                    <RowDefinition Height="1*"></RowDefinition>
+                    <RowDefinition Height="1*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Row="0" Grid.Column="0" Content="Wygładzający" Click="ApplyAverageFilter_Click" />
+                <Button Grid.Row="0" Grid.Column="1" Content="Medianowy" Click="ApplyMedianFilter_Click" />
+                <Button Grid.Row="1" Grid.Column="0" Content="Sobel" Click="ApplySobelFilter_Click" />
+                <Button Grid.Row="1" Grid.Column="1" Content="Górnoprzepustowy*" Click="ApplyHighPassFilter_Click" />
+                <Button Grid.Row="2" Grid.Column="0" Content="Rozmycie gaussowskie" Click="ApplyGaussianBlurFilter_Click" />
+                <Button Grid.Row="2" Grid.Column="1" Content="Splot maski" Click="ApplyMaskFilter_Click" />
+
             </Grid>
 
-            <TextBlock Grid.Row="5" Grid.Column="0" Text="Wartość" FontSize="20" FontWeight="Bold" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            <TextBox Grid.Row="5" Grid.Column="1" x:Name="ValueTextBox" VerticalAlignment="Center" />
+            <Grid Grid.Row="3" x:Name="valueFieldGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition  Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Wartość" FontSize="20" FontWeight="Bold" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" x:Name="ValueTextBox" VerticalAlignment="Center" />
+            </Grid>
 
         </Grid>
     </Grid>

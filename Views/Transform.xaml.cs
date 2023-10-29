@@ -112,14 +112,7 @@ namespace Grafika.Views
 
         private void ApplyBrightness_Click(object sender, RoutedEventArgs e)
         {
-            if (double.TryParse(ValueTextBox.Text, out double value))
-            {
-                ApplyBrightness(value); // Zmiana jasności
-            }
-            else
-            {
-                MessageBox.Show("Podaj wartość operacji");
-            }
+            ApplyBrightness(2);
         }
 
         private void ApplyGrayscale_Click(object sender, RoutedEventArgs e)
@@ -289,93 +282,38 @@ namespace Grafika.Views
             }
         }
 
-
-        public BitmapImage ConvertBitmapSourceToBitmapImage(BitmapSource bitmapSource)
-        {
-            if (bitmapSource != null)
-            {
-                BitmapImage bitmapImage = new BitmapImage();
-
-                using (MemoryStream memoryStream = new MemoryStream())
-                {
-                    BitmapEncoder encoder = new PngBitmapEncoder(); // Możesz dostosować format do swoich potrzeb
-                    encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
-                    encoder.Save(memoryStream);
-
-                    memoryStream.Seek(0, SeekOrigin.Begin);
-
-                    bitmapImage.BeginInit();
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.StreamSource = memoryStream;
-                    bitmapImage.EndInit();
-
-                    return bitmapImage;
-                }
-            }
-            else
-            {
-                MessageBox.Show("Wystąpił błąd");
-                return null;
-            }
-        }
-
-        private void TransformRadio_Checked(object sender, RoutedEventArgs e)
-        {
-            if (transformGrid != null && filtersGrid != null && valueFieldGrid != null)
-            {
-                transformGrid.Visibility = Visibility.Visible;
-                filtersGrid.Visibility = Visibility.Collapsed;
-                valueFieldGrid.Visibility = Visibility.Visible;
-            }
-        }
-
-        private void FiltersRadio_Checked(object sender, RoutedEventArgs e)
-        {
-            if (transformGrid != null && filtersGrid != null && valueFieldGrid != null)
-            {
-                transformGrid.Visibility = Visibility.Collapsed;
-                filtersGrid.Visibility = Visibility.Visible;
-                valueFieldGrid.Visibility = Visibility.Collapsed;
-            }
-        }
-
-
         private void ApplyAverageFilter_Click(object sender, RoutedEventArgs e)
         {
             if (originalImage != null)
             {
                 int width = originalImage.PixelWidth;
                 int height = originalImage.PixelHeight;
+
                 int stride = width * 4;
                 byte[] pixelData = new byte[height * stride];
                 originalImage.CopyPixels(pixelData, stride, 0);
 
-                int kernelSize = 3; // Rozmiar maski (np. 3x3)
-
-                for (int y = 0; y < height; y++)
+                for (int y = 1; y < height - 1; y++)
                 {
-                    for (int x = 0; x < width; x++)
+                    for (int x = 1; x < width - 1; x++)
                     {
                         int offset = y * stride + x * 4;
 
-                        int totalR = 0, totalG = 0, totalB = 0;
+                        int totalR = 0;
+                        int totalG = 0;
+                        int totalB = 0;
+
                         int pixelCount = 0;
 
-                        for (int ky = -kernelSize / 2; ky <= kernelSize / 2; ky++)
+                        for (int i = -1; i <= 1; i++)
                         {
-                            for (int kx = -kernelSize / 2; kx <= kernelSize / 2; kx++)
+                            for (int j = -1; j <= 1; j++)
                             {
-                                int nx = x + kx;
-                                int ny = y + ky;
-
-                                if (nx >= 0 && nx < width && ny >= 0 && ny < height)
-                                {
-                                    int kernelOffset = ny * stride + nx * 4;
-                                    totalR += pixelData[kernelOffset + 2];
-                                    totalG += pixelData[kernelOffset + 1];
-                                    totalB += pixelData[kernelOffset];
-                                    pixelCount++;
-                                }
+                                int neighborOffset = (y + i) * stride + (x + j) * 4;
+                                totalR += pixelData[neighborOffset + 2];
+                                totalG += pixelData[neighborOffset + 1];
+                                totalB += pixelData[neighborOffset];
+                                pixelCount++;
                             }
                         }
 
@@ -526,24 +464,28 @@ namespace Grafika.Views
             {
                 int width = originalImage.PixelWidth;
                 int height = originalImage.PixelHeight;
+
                 int stride = width * 4;
                 byte[] pixelData = new byte[height * stride];
                 originalImage.CopyPixels(pixelData, stride, 0);
 
-                int kernelSize = 3;
-                int[,] kernel = {
-                    { -1, -1, -1 },
-                    { -1,  9, -1 },
-                    { -1, -1, -1 }
+                byte[] newPixelData = new byte[pixelData.Length];
+                Array.Copy(pixelData, newPixelData, pixelData.Length);
+
+                int[] highPassKernel = {
+                    0, -1, 0,
+                    -1, 5, -1,
+                    0, -1, 0
                 };
 
-                for (int y = 0; y < height; y++)
+                for (int y = 1; y < height - 1; y++)
                 {
-                    for (int x = 0; x < width; x++)
+                    for (int x = 1; x < width - 1; x++)
                     {
                         int offset = y * stride + x * 4;
 
                         int totalR = 0, totalG = 0, totalB = 0;
+                        int kernelIndex = 0;
 
                         for (int ky = -1; ky <= 1; ky++)
                         {
@@ -552,13 +494,13 @@ namespace Grafika.Views
                                 int nx = x + kx;
                                 int ny = y + ky;
 
-                                if (nx >= 0 && nx < width && ny >= 0 && ny < height)
-                                {
-                                    int kernelOffset = ny * stride + nx * 4;
-                                    totalR += pixelData[kernelOffset + 2] * kernel[ky + 1, kx + 1];
-                                    totalG += pixelData[kernelOffset + 1] * kernel[ky + 1, kx + 1];
-                                    totalB += pixelData[kernelOffset] * kernel[ky + 1, kx + 1];
-                                }
+                                int kernelOffset = ny * stride + nx * 4;
+
+                                totalR += pixelData[kernelOffset + 2] * highPassKernel[kernelIndex];
+                                totalG += pixelData[kernelOffset + 1] * highPassKernel[kernelIndex];
+                                totalB += pixelData[kernelOffset] * highPassKernel[kernelIndex];
+
+                                kernelIndex++;
                             }
                         }
 
@@ -566,13 +508,13 @@ namespace Grafika.Views
                         byte newG = (byte)Math.Max(0, Math.Min(255, totalG));
                         byte newB = (byte)Math.Max(0, Math.Min(255, totalB));
 
-                        pixelData[offset + 2] = newR;
-                        pixelData[offset + 1] = newG;
-                        pixelData[offset] = newB;
+                        newPixelData[offset + 2] = newR;
+                        newPixelData[offset + 1] = newG;
+                        newPixelData[offset] = newB;
                     }
                 }
 
-                BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
+                BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, newPixelData, stride);
                 originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
                 displayedImage.Source = processedBitmap;
             }
@@ -581,6 +523,7 @@ namespace Grafika.Views
                 MessageBox.Show("Najpierw wczytaj obraz.");
             }
         }
+
 
         private void ApplyGaussianBlurFilter_Click(object sender, RoutedEventArgs e)
         {
@@ -641,6 +584,55 @@ namespace Grafika.Views
             else
             {
                 MessageBox.Show("Najpierw wczytaj obraz.");
+            }
+        }
+
+        public BitmapImage ConvertBitmapSourceToBitmapImage(BitmapSource bitmapSource)
+        {
+            if (bitmapSource != null)
+            {
+                BitmapImage bitmapImage = new BitmapImage();
+
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    BitmapEncoder encoder = new PngBitmapEncoder(); // Możesz dostosować format do swoich potrzeb
+                    encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
+                    encoder.Save(memoryStream);
+
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+
+                    bitmapImage.BeginInit();
+                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmapImage.StreamSource = memoryStream;
+                    bitmapImage.EndInit();
+
+                    return bitmapImage;
+                }
+            }
+            else
+            {
+                MessageBox.Show("Wystąpił błąd");
+                return null;
+            }
+        }
+
+        private void TransformRadio_Checked(object sender, RoutedEventArgs e)
+        {
+            if (transformGrid != null && filtersGrid != null && valueFieldGrid != null)
+            {
+                transformGrid.Visibility = Visibility.Visible;
+                filtersGrid.Visibility = Visibility.Collapsed;
+                valueFieldGrid.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void FiltersRadio_Checked(object sender, RoutedEventArgs e)
+        {
+            if (transformGrid != null && filtersGrid != null && valueFieldGrid != null)
+            {
+                transformGrid.Visibility = Visibility.Collapsed;
+                filtersGrid.Visibility = Visibility.Visible;
+                valueFieldGrid.Visibility = Visibility.Collapsed;
             }
         }
 

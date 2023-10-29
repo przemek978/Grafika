@@ -487,18 +487,15 @@ namespace Grafika.Views
                         int totalR = 0, totalG = 0, totalB = 0;
                         int kernelIndex = 0;
 
-                        for (int ky = -1; ky <= 1; ky++)
+                        for (int i = -1; i <= 1; i++)
                         {
-                            for (int kx = -1; kx <= 1; kx++)
+                            for (int j = -1; j <= 1; j++)
                             {
-                                int nx = x + kx;
-                                int ny = y + ky;
+                                int neighborOffset = (y + i) * stride + (x + j) * 4;
 
-                                int kernelOffset = ny * stride + nx * 4;
-
-                                totalR += pixelData[kernelOffset + 2] * highPassKernel[kernelIndex];
-                                totalG += pixelData[kernelOffset + 1] * highPassKernel[kernelIndex];
-                                totalB += pixelData[kernelOffset] * highPassKernel[kernelIndex];
+                                totalR += pixelData[neighborOffset + 2] * highPassKernel[kernelIndex];
+                                totalG += pixelData[neighborOffset + 1] * highPassKernel[kernelIndex];
+                                totalB += pixelData[neighborOffset] * highPassKernel[kernelIndex];
 
                                 kernelIndex++;
                             }

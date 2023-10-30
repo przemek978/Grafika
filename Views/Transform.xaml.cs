@@ -24,6 +24,7 @@ namespace Grafika.Views
     public partial class Transform : Window
     {
         private BitmapImage originalImage;
+        private bool ChangeOriginalImage = false;
         public Transform()
         {
             InitializeComponent();
@@ -164,7 +165,7 @@ namespace Grafika.Views
                 }
 
                 BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
-                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                if (ChangeOriginalImage) { originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap); }
                 displayedImage.Source = processedBitmap;
             }
             else
@@ -202,7 +203,7 @@ namespace Grafika.Views
                 }
 
                 BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
-                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                if (ChangeOriginalImage) { originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap); }
                 displayedImage.Source = processedBitmap;
             }
             else
@@ -237,7 +238,7 @@ namespace Grafika.Views
                 }
 
                 BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
-                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                if (ChangeOriginalImage) { originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap); }
                 displayedImage.Source = processedBitmap;
             }
             else
@@ -273,7 +274,7 @@ namespace Grafika.Views
                 }
 
                 BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
-                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                if (ChangeOriginalImage) { originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap); }
                 displayedImage.Source = processedBitmap;
             }
             else
@@ -328,7 +329,7 @@ namespace Grafika.Views
                 }
 
                 BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
-                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                if (ChangeOriginalImage) { originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap); }
                 displayedImage.Source = processedBitmap;
             }
             else
@@ -386,7 +387,7 @@ namespace Grafika.Views
                 }
 
                 BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixelData, stride);
-                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                if (ChangeOriginalImage) { originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap); }
                 displayedImage.Source = processedBitmap;
             }
             else
@@ -449,7 +450,7 @@ namespace Grafika.Views
                 }
 
                 BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, newPixelData, stride);
-                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                if (ChangeOriginalImage) { originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap); }
                 displayedImage.Source = processedBitmap;
             }
             else
@@ -512,7 +513,7 @@ namespace Grafika.Views
                 }
 
                 BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, newPixelData, stride);
-                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                if (ChangeOriginalImage) { originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap); }
                 displayedImage.Source = processedBitmap;
             }
             else
@@ -537,10 +538,10 @@ namespace Grafika.Views
                 Array.Copy(pixelData, newPixelData, pixelData.Length);
 
                 double[] kernel = {
-            1, 2, 1,
-            2, 4, 2,
-            1, 2, 1
-        };
+                    1, 2, 1,
+                    2, 4, 2,
+                    1, 2, 1
+                };
 
                 double kernelSum = kernel.Sum();
 
@@ -575,7 +576,7 @@ namespace Grafika.Views
                 }
 
                 BitmapSource processedBitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, newPixelData, stride);
-                originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap);
+                if (ChangeOriginalImage) { originalImage = ConvertBitmapSourceToBitmapImage(processedBitmap); }
                 displayedImage.Source = processedBitmap;
             }
             else

@@ -75,9 +75,9 @@
                 <Button Grid.Row="0" Grid.Column="0" Content="Wygładzający" Click="ApplyAverageFilter_Click" />
                 <Button Grid.Row="0" Grid.Column="1" Content="Medianowy" Click="ApplyMedianFilter_Click" />
                 <Button Grid.Row="1" Grid.Column="0" Content="Sobel" Click="ApplySobelFilter_Click" />
-                <Button Grid.Row="1" Grid.Column="1" Content="Górnoprzepustowy*" Click="ApplyHighPassFilter_Click" />
+                <Button Grid.Row="1" Grid.Column="1" Content="Górnoprzepustowy" Click="ApplyHighPassFilter_Click" />
                 <Button Grid.Row="2" Grid.Column="0" Content="Rozmycie gaussowskie" Click="ApplyGaussianBlurFilter_Click" />
-                <Button Grid.Row="2" Grid.Column="1" Content="Splot maski" Click="ApplyMaskFilter_Click" />
+                <!--<Button Grid.Row="2" Grid.Column="1" Content="Splot maski" Click="ApplyMaskFilter_Click" />-->
 
             </Grid>
 

@@ -54,5 +54,12 @@ namespace Grafika
             transform.Show();
             this.Hide();
         }
+
+        private void HistBin_Click(object sender, RoutedEventArgs e)
+        {
+            HistBin histBin = new();
+            histBin.Show();
+            this.Hide();
+        }
     }
 }

@@ -593,7 +593,7 @@ namespace Grafika.Views
 
                 using (MemoryStream memoryStream = new MemoryStream())
                 {
-                    BitmapEncoder encoder = new PngBitmapEncoder(); // Możesz dostosować format do swoich potrzeb
+                    BitmapEncoder encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
                     encoder.Save(memoryStream);
 

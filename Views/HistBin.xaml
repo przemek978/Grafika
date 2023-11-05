@@ -1,0 +1,43 @@
+﻿<Window x:Class="Grafika.Views.HistBin"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Grafika.Views"
+        mc:Ignorable="d"
+        Title="HistBin" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*"></ColumnDefinition>
+            <ColumnDefinition Width="1.5*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Image x:Name="displayedImage" Stretch="UniformToFill">
+            </Image>
+        </Grid>
+        <Grid Grid.Column="1" Background="White">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"></RowDefinition>
+                <RowDefinition Height="1*"></RowDefinition>
+                <RowDefinition Height="1*"></RowDefinition>
+                <RowDefinition Height="1*"></RowDefinition>
+                <RowDefinition Height="1*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"></ColumnDefinition>
+                <ColumnDefinition Width="1*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Wczytaj obraz" Click="LoadImage_Click" />
+            <Button Grid.Row="1" Grid.Column="0" Content="Rozszerz Histogram" Click="NormalizeHistogram_Click" />
+            <Button Grid.Row="1" Grid.Column="1" Content="Wyrównaj Histogram" Click="EqualizeHistogram_Click" />
+            <!-- Dodaj przyciski dla różnych metod binaryzacji -->
+            <Button Grid.Row="2" Grid.Column="0" Content="Ręczna Binaryzacja" Click="ManualThreshold_Click" />
+            <Button Grid.Row="2" Grid.Column="1" Content="Percent Black Selection" Click="PercentBlackSelection_Click" />
+            <Button Grid.Row="3" Grid.Column="0" Content="Selekcja Iteratywna Średniej" Click="MeanIterativeSelection_Click" />
+            <Button Grid.Row="3" Grid.Column="1" Content="Selekcja Entropii" Click="EntropySelection_Click" />
+            <Button Grid.Row="4" Grid.Column="0" Content="Błąd Minimalny" Click="MinimumError_Click" />
+            <Button Grid.Row="4" Grid.Column="1" Content="Fuzzy Minimum Error" Click="FuzzyMinimumError_Click" />
+
+        </Grid>
+    </Grid>
+</Window>

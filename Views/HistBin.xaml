@@ -5,19 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Grafika.Views"
         mc:Ignorable="d"
-        Title="HistBin" Height="450" Width="800">
+        Title="HistBin" Height="800" Width="1000" MinHeight="800" MinWidth="1000">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="3*"></ColumnDefinition>
             <ColumnDefinition Width="1.5*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid Grid.Column="0">
-            <Image x:Name="displayedImage" Stretch="UniformToFill">
+            <Image x:Name="displayedImage" Stretch="Fill">
             </Image>
         </Grid>
         <Grid Grid.Column="1" Background="White">
             <Grid.RowDefinitions>
-                <RowDefinition Height="1*"></RowDefinition>
                 <RowDefinition Height="1*"></RowDefinition>
                 <RowDefinition Height="1*"></RowDefinition>
                 <RowDefinition Height="1*"></RowDefinition>
@@ -30,14 +29,18 @@
             <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Wczytaj obraz" Click="LoadImage_Click" />
             <Button Grid.Row="1" Grid.Column="0" Content="Rozszerz Histogram" Click="NormalizeHistogram_Click" />
             <Button Grid.Row="1" Grid.Column="1" Content="Wyrównaj Histogram" Click="EqualizeHistogram_Click" />
-            <!-- Dodaj przyciski dla różnych metod binaryzacji -->
-            <Button Grid.Row="2" Grid.Column="0" Content="Ręczna Binaryzacja" Click="ManualThreshold_Click" />
-            <Button Grid.Row="2" Grid.Column="1" Content="Percent Black Selection" Click="PercentBlackSelection_Click" />
-            <Button Grid.Row="3" Grid.Column="0" Content="Selekcja Iteratywna Średniej" Click="MeanIterativeSelection_Click" />
-            <Button Grid.Row="3" Grid.Column="1" Content="Selekcja Entropii" Click="EntropySelection_Click" />
-            <Button Grid.Row="4" Grid.Column="0" Content="Błąd Minimalny" Click="MinimumError_Click" />
-            <Button Grid.Row="4" Grid.Column="1" Content="Fuzzy Minimum Error" Click="FuzzyMinimumError_Click" />
 
+            <Button Grid.Row="2" Grid.Column="0" Content="Ręczna Binaryzacja" Click="ManualThreshold_Click" />
+            <StackPanel Grid.Row="2" Grid.Column="1">
+                <TextBlock Text="Wartość" FontSize="20" FontWeight="Bold" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBox  x:Name="ValueTextBox" VerticalAlignment="Center" />
+            </StackPanel>
+            <Button Grid.Row="3" Grid.Column="0" Click="PercentBlackSelection_Click" >
+                <TextBlock TextWrapping="Wrap" Text="Procentowa selekcja czarnego"/>
+            </Button>
+            <Button Grid.Row="3" Grid.Column="1"  Click="MeanIterativeSelection_Click" >
+                <TextBlock TextWrapping="Wrap" Text="Selekcja Iteratywna Średniej"/>
+            </Button>
         </Grid>
     </Grid>
 </Window>

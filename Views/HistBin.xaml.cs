@@ -27,7 +27,13 @@ namespace Grafika.Views
     public partial class HistBin : Window
     {
         private BitmapImage originalImage;
-        private BitmapImage processedImage;
+        private WriteableBitmap processedImage;
+
+        int globalWidth, globalHeight;
+        byte[] globalPixels;
+        int[] globalPixelsAsGray;
+        List<Color> globalPixelsAsColors = new List<Color>();
+        int bytesPerPixel, stride;
 
         public HistBin()
         {
@@ -60,7 +66,21 @@ namespace Grafika.Views
             {
                 BitmapImage image = new BitmapImage(new Uri(filePath));
                 originalImage = image;
-                displayedImage.Source = image;
+
+                globalWidth = originalImage.PixelWidth;
+                globalHeight = originalImage.PixelHeight;
+                bytesPerPixel = (originalImage.Format.BitsPerPixel + 7) / 8;
+                stride = globalWidth * bytesPerPixel;
+
+                byte[] pixelData = new byte[globalHeight * stride];
+                originalImage.CopyPixels(pixelData, stride, 0);
+                globalPixels = pixelData;
+
+                setGlobalColorsFromPixelsArray();
+                processedImage = new WriteableBitmap(originalImage);
+                displayedImage.Source = originalImage;
+
+                setGlobalGrayPixels();
             }
             catch (Exception ex)
             {
@@ -72,10 +92,7 @@ namespace Grafika.Views
         {
             if (originalImage != null)
             {
-                Bitmap bitmap = BitmapImage2Bitmap(originalImage);
-                StretchHistogram(bitmap);
-                processedImage = Bitmap2BitmapImage(bitmap);
-                displayedImage.Source = processedImage;
+                StretchHistogram();
             }
         }
 
@@ -83,498 +100,210 @@ namespace Grafika.Views
         {
             if (originalImage != null)
             {
-                Bitmap bitmap = BitmapImage2Bitmap(originalImage);
-                EqualizeHistogram(bitmap);
-                processedImage = Bitmap2BitmapImage(bitmap);
-                displayedImage.Source = processedImage;
+                EqualizeHistogram();
             }
         }
 
-        private Bitmap BitmapImage2Bitmap(BitmapImage bitmapImage)
+        private void StretchHistogram()
         {
-            using (var stream = new MemoryStream())
+            int min, max;
+            int[] grayscalePixels = new int[globalPixelsAsColors.Count];
+
+            for (int i = 0; i < globalPixelsAsColors.Count; i++)
             {
-                BitmapEncoder encoder = new BmpBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(bitmapImage));
-                encoder.Save(stream);
-                System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(stream);
-                return bitmap;
+                grayscalePixels[i] = ((globalPixelsAsColors[i].R + globalPixelsAsColors[i].B + globalPixelsAsColors[i].G) / 3);
             }
+
+            min = grayscalePixels.Min();
+            max = grayscalePixels.Max();
+
+            for (int i = 0; i < grayscalePixels.Length; i++)
+            {
+                grayscalePixels[i] = (int)((double)(grayscalePixels[i] - min) / (max - min) * 255);
+            }
+            drawImageFromBytes(convertPixelsArrayToDrawableArray(grayscalePixels));
         }
 
-        private BitmapImage Bitmap2BitmapImage(Bitmap bitmap)
+        private void EqualizeHistogram()
         {
-            BitmapImage bitmapImage = new BitmapImage();
-            using (var stream = new MemoryStream())
-            {
-                bitmap.Save(stream, ImageFormat.Bmp);
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
-            }
-            bitmapImage.Freeze();
-            return bitmapImage;
-        }
+            int[] grayscalePixels = calculateGrayPixels();
+            int numberOfPixels = globalPixels.Length;
 
-        private void StretchHistogram(Bitmap bitmap)
-        {
-            int JminR = 255;
-            int JmaxR = 0;
-
-            int JminG = 255;
-            int JmaxG = 0;
-
-            int JminB = 255;
-            int JmaxB = 0;
-
-            // Przeszukaj obraz i znajdź minimalne i maksymalne jasności w składowych R, G i B
-            for (int y = 0; y < bitmap.Height; y++)
-            {
-                for (int x = 0; x < bitmap.Width; x++)
-                {
-                    Color pixelColor = bitmap.GetPixel(x, y);
-
-                    int R = pixelColor.R;
-                    int G = pixelColor.G;
-                    int B = pixelColor.B;
-
-                    // Dla składowej R
-                    if (R < JminR)
-                    {
-                        JminR = R; // Aktualizuj minimalną jasność
-                    }
-
-                    if (R > JmaxR)
-                    {
-                        JmaxR = R; // Aktualizuj maksymalną jasność
-                    }
-
-                    // Dla składowej G
-                    if (G < JminG)
-                    {
-                        JminG = G; // Aktualizuj minimalną jasność
-                    }
-
-                    if (G > JmaxG)
-                    {
-                        JmaxG = G; // Aktualizuj maksymalną jasność
-                    }
-
-                    // Dla składowej B
-                    if (B < JminB)
-                    {
-                        JminB = B; // Aktualizuj minimalną jasność
-                    }
-
-                    if (B > JmaxB)
-                    {
-                        JmaxB = B; // Aktualizuj maksymalną jasność
-                    }
-                }
-            }
-
-            // Rozszerz histogram we wszystkich składowych koloru
-            for (int y = 0; y < bitmap.Height; y++)
-            {
-                for (int x = 0; x < bitmap.Width; x++)
-                {
-                    Color pixelColor = bitmap.GetPixel(x, y);
-
-                    int newR = (int)(255.0 / (JmaxR - JminR) * (pixelColor.R - JminR));
-                    int newG = (int)(255.0 / (JmaxG - JminG) * (pixelColor.G - JminG));
-                    int newB = (int)(255.0 / (JmaxB - JminB) * (pixelColor.B - JminB));
-
-                    newR = Math.Max(0, Math.Min(255, newR)); // Upewnij się, że wartość mieści się w zakresie [0, 255]
-                    newG = Math.Max(0, Math.Min(255, newG));
-                    newB = Math.Max(0, Math.Min(255, newB));
-
-                    Color newPixelColor = Color.FromArgb(newR, newG, newB);
-                    bitmap.SetPixel(x, y, newPixelColor);
-                }
-            }
-        }
-
-
-
-
-        private void EqualizeHistogram(Bitmap bitmap)
-        {
-            // Pobierz obraz jako tablicę pikseli
-            BitmapData imageData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            byte[] pixelData = new byte[imageData.Stride * imageData.Height];
-            System.Runtime.InteropServices.Marshal.Copy(imageData.Scan0, pixelData, 0, pixelData.Length);
-
-            int[] histogram = new int[256];
-            int totalPixels = pixelData.Length / 3;
-
-            // Oblicz histogram czerwieni (R)
-            for (int i = 2; i < pixelData.Length; i += 3)
-            {
-                int redValue = pixelData[i];
-                histogram[redValue]++;
-            }
-
-            // Skumulowany histogram
-            int[] cumulativeHistogram = new int[256];
-            cumulativeHistogram[0] = histogram[0];
+            int[] cdf = new int[256];
+            cdf[0] = grayscalePixels[0];
             for (int i = 1; i < 256; i++)
             {
-                cumulativeHistogram[i] = cumulativeHistogram[i - 1] + histogram[i];
+                cdf[i] = cdf[i - 1] + grayscalePixels[i];
             }
 
-            // Przeskalowanie histogramu
-            for (int i = 2; i < pixelData.Length; i += 3)
+            byte[] equalizedPixels = new byte[numberOfPixels];
+            for (int i = 0; i < numberOfPixels; i += 4)
             {
-                int redValue = pixelData[i];
-                int newRed = (int)(255.0 * cumulativeHistogram[redValue] / totalPixels);
-                pixelData[i] = (byte)newRed;
+                int gray = (globalPixels[i] + globalPixels[i + 1] + globalPixels[i + 2]) / 3;
+                int newGray = (int)(255.0 * (cdf[gray] - cdf.Min()) / (cdf.Max() - cdf.Min()));
+                equalizedPixels[i] = equalizedPixels[i + 1] = equalizedPixels[i + 2] = (byte)newGray;
+                equalizedPixels[i + 3] = 255;
             }
-
-            // Zapisz zmienione dane z powrotem do obrazu
-            System.Runtime.InteropServices.Marshal.Copy(pixelData, 0, imageData.Scan0, pixelData.Length);
-            bitmap.UnlockBits(imageData);
+            drawImageFromBytes(equalizedPixels);
+            setGlobalColorsFromPixelsArray(equalizedPixels);
         }
 
         private void ManualThreshold_Click(object sender, RoutedEventArgs e)
         {
-            int threshold = GetManualThresholdFromUser();
-            Bitmap binaryImage = ApplyManualThreshold(threshold);
-            DisplayImage(binaryImage);
+            if (int.TryParse(ValueTextBox.Text, out int threshold))
+            {
+                byte[] binarizedPixels = makeBinarizationFromThreshold(threshold);
+                drawImageFromBytes(binarizedPixels);
+            }
+            else
+            {
+                MessageBox.Show("Podaj wartość operacji");
+            }
         }
 
         private void PercentBlackSelection_Click(object sender, RoutedEventArgs e)
         {
-            Bitmap binaryImage = ApplyPercentBlackSelection();
-            DisplayImage(binaryImage);
+            int[] histogramArray = calculateGrayPixels();
+            int numberOfPixels = globalPixelsAsColors.Count;
+            int seekedThreshold = 0, percentage = 50;
+            bool foundThreshold = false;
+            int cumulativeNumber = 0, index = 0;
+
+            while (!foundThreshold)
+            {
+                cumulativeNumber += histogramArray[index];
+                double currentPercentage = (double)cumulativeNumber / numberOfPixels * 100;
+                if (currentPercentage < percentage)   
+                    index++;
+                else
+                    foundThreshold = true;
+
+                seekedThreshold = index;
+            }
+            byte[] binarized = makeBinarizationFromThreshold(seekedThreshold);
+
+            drawImageFromBytes(binarized);
         }
 
         private void MeanIterativeSelection_Click(object sender, RoutedEventArgs e)
         {
-            Bitmap binaryImage = ApplyMeanIterativeSelection();
-            DisplayImage(binaryImage);
-        }
-
-        private void EntropySelection_Click(object sender, RoutedEventArgs e)
-        {
-            Bitmap binaryImage = ApplyEntropySelection();
-            DisplayImage(binaryImage);
-        }
-
-        private void MinimumError_Click(object sender, RoutedEventArgs e)
-        {
-            Bitmap binaryImage = ApplyFuzzyMinimumError();
-            DisplayImage(binaryImage);
-        }
-
-        private void FuzzyMinimumError_Click(object sender, RoutedEventArgs e)
-        {
-            Bitmap binaryImage = ApplyFuzzyMinimumError();
-            DisplayImage(binaryImage);
-        }
-
-        private int GetManualThresholdFromUser()
-        {
-            return 128;
-        }
-
-        private Bitmap ApplyManualThreshold(int threshold)
-        {
-            BitmapSource source = (BitmapSource)displayedImage.Source;
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
-            Bitmap binaryImage = new Bitmap(width, height);
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Color pixelColor = GetPixelColor(source, x, y);
-                    int grayValue = (int)(0.3 * pixelColor.R + 0.59 * pixelColor.G + 0.11 * pixelColor.B);
-                    int binaryValue = grayValue >= threshold ? 255 : 0;
-                    binaryImage.SetPixel(x, y, Color.FromArgb(binaryValue, binaryValue, binaryValue));
-                }
-            }
-
-            return binaryImage;
-        }
-
-        private Bitmap ApplyPercentBlackSelection()
-        {
-            BitmapSource source = (BitmapSource)displayedImage.Source;
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
-            Bitmap binaryImage = new Bitmap(width, height);
-
-            int threshold = CalculateBlackThreshold(source);
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Color pixelColor = GetPixelColor(source, x, y);
-                    int grayValue = (int)(0.3 * pixelColor.R + 0.59 * pixelColor.G + 0.11 * pixelColor.B);
-                    int binaryValue = grayValue >= threshold ? 255 : 0;
-                    binaryImage.SetPixel(x, y, Color.FromArgb(binaryValue, binaryValue, binaryValue));
-                }
-            }
-
-            return binaryImage;
-        }
-
-        private Bitmap ApplyMeanIterativeSelection()
-        {
-            BitmapSource source = (BitmapSource)displayedImage.Source;
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
-            Bitmap binaryImage = new Bitmap(width, height);
-
-            int threshold = CalculateMeanIterativeThreshold(source);
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Color pixelColor = GetPixelColor(source, x, y);
-                    int grayValue = (int)(0.3 * pixelColor.R + 0.59 * pixelColor.G + 0.11 * pixelColor.B);
-                    int binaryValue = grayValue >= threshold ? 255 : 0;
-                    binaryImage.SetPixel(x, y, Color.FromArgb(binaryValue, binaryValue, binaryValue));
-                }
-            }
-
-            return binaryImage;
-        }
-
-        private Bitmap ApplyEntropySelection()
-        {
-            BitmapSource source = (BitmapSource)displayedImage.Source;
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
-            Bitmap binaryImage = new Bitmap(width, height);
-
-            int threshold = CalculateEntropyThreshold(source);
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Color pixelColor = GetPixelColor(source, x, y);
-                    int grayValue = (int)(0.3 * pixelColor.R + 0.59 * pixelColor.G + 0.11 * pixelColor.B);
-                    int binaryValue = grayValue >= threshold ? 255 : 0;
-                    binaryImage.SetPixel(x, y, Color.FromArgb(binaryValue, binaryValue, binaryValue));
-                }
-            }
-
-            return binaryImage;
-        }
-
-        private Bitmap ApplyFuzzyMinimumError()
-        {
-            BitmapSource source = (BitmapSource)displayedImage.Source;
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
-            Bitmap binaryImage = new Bitmap(width, height);
-
-            int threshold = CalculateFuzzyMinimumErrorThreshold(source);
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Color pixelColor = GetPixelColor(source, x, y);
-                    int grayValue = (int)(0.3 * pixelColor.R + 0.59 * pixelColor.G + 0.11 * pixelColor.B);
-                    int binaryValue = grayValue >= threshold ? 255 : 0;
-                    binaryImage.SetPixel(x, y, Color.FromArgb(binaryValue, binaryValue, binaryValue));
-                }
-            }
-
-            return binaryImage;
-        }
-
-
-        private int CalculateBlackThreshold(BitmapSource source)
-        {
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
-
-            // Przykładowa implementacja obliczania progu czarnego
-            int totalPixels = width * height;
-
-            // Tu możesz dodać logikę obliczania progu
-            int threshold = 128; // Dla przykładu przyjmujemy próg 128
-
-            return threshold;
-        }
-
-        private int CalculateEntropyThreshold(BitmapSource source)
-        {
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
-
-            // Przykładowa implementacja obliczania progu entropii
-            int[] histogram = new int[256];
-            int totalPixels = width * height;
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Color pixelColor = GetPixelColor(source, x, y);
-                    int grayValue = (int)(0.3 * pixelColor.R + 0.59 * pixelColor.G + 0.11 * pixelColor.B);
-                    histogram[grayValue]++;
-                }
-            }
-
-            double entropy = 0;
-
-            for (int i = 0; i < 256; i++)
-            {
-                double probability = (double)histogram[i] / totalPixels;
-                if (probability > 0)
-                {
-                    entropy -= probability * Math.Log(probability, 2);
-                }
-            }
-
-            // Załóżmy, że próg entropii to 50% entropii (dla uproszczenia)
-            int threshold = (int)(0.5 * entropy * 255);
-
-            return threshold;
-        }
-
-
-        private int CalculateMeanIterativeThreshold(BitmapSource source)
-        {
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
-
-            // Przykładowa implementacja obliczania progu selekcji iteracyjnej średniej
-            int totalPixels = width * height;
-            int sumGrayValues = 0;
-            int threshold = 128; // Przykładowy próg początkowy
-
+            int threshold = 128;
+            int[] histogramArray = calculateGrayPixels();
             while (true)
             {
-                int backgroundSum = 0;
-                int backgroundCount = 0;
-                int foregroundSum = 0;
-                int foregroundCount = 0;
+                int sumBelow = 0;
+                int countBelow = 0;
+                int sumAbove = 0;
+                int countAbove = 0;
 
-                for (int y = 0; y < height; y++)
+                for (int i = 0; i < histogramArray.Length; i++)
                 {
-                    for (int x = 0; x < width; x++)
+                    if (i < threshold)
                     {
-                        Color pixelColor = GetPixelColor(source, x, y);
-                        int grayValue = (int)(0.3 * pixelColor.R + 0.59 * pixelColor.G + 0.11 * pixelColor.B);
-
-                        if (grayValue <= threshold)
-                        {
-                            backgroundSum += grayValue;
-                            backgroundCount++;
-                        }
-                        else
-                        {
-                            foregroundSum += grayValue;
-                            foregroundCount++;
-                        }
+                        sumBelow += i * histogramArray[i];
+                        countBelow += histogramArray[i];
+                    }
+                    else
+                    {
+                        sumAbove += i * histogramArray[i];
+                        countAbove += histogramArray[i];
                     }
                 }
 
-                int newThreshold = (backgroundSum / backgroundCount + foregroundSum / foregroundCount) / 2;
-
-                if (Math.Abs(newThreshold - threshold) < 1)
+                int newThreshold = (sumBelow / countBelow + sumAbove / countAbove) / 2;
+                if (newThreshold == threshold)
                 {
-                    threshold = newThreshold;
                     break;
                 }
 
                 threshold = newThreshold;
             }
 
-            return threshold;
+            byte[] binarizedPixels = makeBinarizationFromThreshold(threshold);
+
+            drawImageFromBytes(binarizedPixels);
         }
 
-        private int CalculateFuzzyMinimumErrorThreshold(BitmapSource source)
+        private byte[] makeBinarizationFromThreshold(int threshold)
         {
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
-
-            // Przykładowa implementacja obliczania progu błędu minimalnego
-            int totalPixels = width * height;
-            int threshold = 128; // Przykładowy próg początkowy
-
-            while (true)
+            byte[] binarized = new byte[globalPixels.Length];
+            for (int i = 0; i < globalPixels.Length; i += 4)
             {
-                int backgroundSum = 0;
-                int backgroundCount = 0;
-                int foregroundSum = 0;
-                int foregroundCount = 0;
-
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        Color pixelColor = GetPixelColor(source, x, y);
-                        int grayValue = (int)(0.3 * pixelColor.R + 0.59 * pixelColor.G + 0.11 * pixelColor.B);
-
-                        if (grayValue <= threshold)
-                        {
-                            backgroundSum += grayValue;
-                            backgroundCount++;
-                        }
-                        else
-                        {
-                            foregroundSum += grayValue;
-                            foregroundCount++;
-                        }
-                    }
-                }
-
-                int newThreshold = (backgroundSum / backgroundCount + foregroundSum / foregroundCount) / 2;
-
-                if (Math.Abs(newThreshold - threshold) < 1)
-                {
-                    threshold = newThreshold;
-                    break;
-                }
-
-                threshold = newThreshold;
+                binarized[i] = (byte)(globalPixelsAsGray[i] < threshold ? 0 : 255);
+                binarized[i + 1] = (byte)(globalPixelsAsGray[i + 1] < threshold ? 0 : 255);
+                binarized[i + 2] = (byte)(globalPixelsAsGray[i + 2] < threshold ? 0 : 255);
+                binarized[i + 3] = 255;
             }
 
-            return threshold;
+            return binarized;
         }
 
 
-        private void DisplayImage(Bitmap binaryImage)
+        private byte[] convertPixelsArrayToDrawableArray(int[] array)
         {
-            displayedImage.Source = BitmapToBitmapImage(binaryImage);
-        }
-
-        private BitmapImage BitmapToBitmapImage(Bitmap bitmap)
-        {
-            using (MemoryStream memory = new MemoryStream())
+            byte[] bytes = new byte[globalPixels.Length];
+            int index = 0;
+            for (int i = 0; i < globalPixels.Length; i += 4)
             {
-                bitmap.Save(memory, ImageFormat.Bmp);
-                memory.Position = 0;
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = memory;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                return bitmapImage;
+                bytes[i] = (byte)array[index];
+                bytes[i + 1] = (byte)array[index];
+                bytes[i + 2] = (byte)array[index];
+                bytes[i + 3] = 255;
+                index++;
+            }
+            return bytes;
+        }
+
+        private void drawImageFromBytes(byte[] bytes)
+        {
+            processedImage.WritePixels(new Int32Rect(0, 0, globalWidth, globalHeight), bytes, stride, 0);
+
+            displayedImage.Source = processedImage;
+        }
+
+        private void setGlobalColorsFromPixelsArray()
+        {
+            globalPixelsAsColors.Clear();
+            for (int i = 0; i + 3 < globalPixels.Length; i += 4)
+            {
+                globalPixelsAsColors.Add(Color.FromArgb(255, globalPixels[i + 2], globalPixels[i + 1], globalPixels[i]));
             }
         }
 
-        private Color GetPixelColor(BitmapSource source, int x, int y)
+        private void setGlobalColorsFromPixelsArray(byte[] array)
         {
-            int pixelStride = (source.Format.BitsPerPixel + 7) / 8;
-            byte[] pixels = new byte[pixelStride];
-            source.CopyPixels(new Int32Rect(x, y, 1, 1), pixels, pixelStride, 0);
-
-            Color color = Color.FromArgb(pixels[2], pixels[1], pixels[0]);
-            return color;
+            globalPixelsAsColors.Clear();
+            for (int i = 0; i + 3 < array.Length; i += 4)
+            {
+                globalPixelsAsColors.Add(Color.FromArgb(255, array[i + 2], array[i + 1], array[i]));
+            }
         }
 
+        private int[] calculateGrayPixels()
+        {
+            int[] grayscaleBytes = new int[256];
+            int average;
 
+
+            for (int i = 0; i < globalPixelsAsColors.Count; i++)
+            {
+                average = ((globalPixelsAsColors[i].R + globalPixelsAsColors[i].B + globalPixelsAsColors[i].G) / 3);
+                grayscaleBytes[average]++;
+            }
+            return grayscaleBytes;
+        }
+
+        private void setGlobalGrayPixels()
+        {
+            int average;
+
+            globalPixelsAsGray = new int[globalPixels.Length];
+            for (int i = 0; i < globalPixels.Length; i += 4)
+            {
+                average = (globalPixels[i] + globalPixels[i + 1] + globalPixels[i + 2]) / 3;
+                globalPixelsAsGray[i] = globalPixelsAsGray[i + 1] = globalPixelsAsGray[i + 2] = average;
+                globalPixelsAsGray[i + 3] = 255;
+            }
+        }
     }
 }

@@ -27,7 +27,7 @@
                 <ColumnDefinition Width="1*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Wczytaj obraz" Click="LoadImage_Click" />
-            <Button Grid.Row="1" Grid.Column="0" Content="Rozszerz Histogram" Click="NormalizeHistogram_Click" />
+            <Button Grid.Row="1" Grid.Column="0" Content="Rozszerz Histogram" Click="StretchHistogram_Click" />
             <Button Grid.Row="1" Grid.Column="1" Content="Wyrównaj Histogram" Click="EqualizeHistogram_Click" />
 
             <Button Grid.Row="2" Grid.Column="0" Content="Ręczna Binaryzacja" Click="ManualThreshold_Click" />

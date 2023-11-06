@@ -29,10 +29,10 @@ namespace Grafika.Views
         private BitmapImage originalImage;
         private WriteableBitmap processedImage;
 
-        int globalWidth, globalHeight;
-        byte[] globalPixels;
-        int[] globalPixelsAsGray;
-        List<Color> globalPixelsAsColors = new List<Color>();
+        int Width, Height;
+        byte[] Pixels;
+        int[] PixelsAsGray;
+        List<Color> PixelsAsColors = new List<Color>();
         int bytesPerPixel, stride;
 
         public HistBin()
@@ -67,20 +67,20 @@ namespace Grafika.Views
                 BitmapImage image = new BitmapImage(new Uri(filePath));
                 originalImage = image;
 
-                globalWidth = originalImage.PixelWidth;
-                globalHeight = originalImage.PixelHeight;
+                Width = originalImage.PixelWidth;
+                Height = originalImage.PixelHeight;
                 bytesPerPixel = (originalImage.Format.BitsPerPixel + 7) / 8;
-                stride = globalWidth * bytesPerPixel;
+                stride = Width * bytesPerPixel;
 
-                byte[] pixelData = new byte[globalHeight * stride];
+                byte[] pixelData = new byte[Height * stride];
                 originalImage.CopyPixels(pixelData, stride, 0);
-                globalPixels = pixelData;
+                Pixels = pixelData;
 
-                setGlobalColorsFromPixelsArray();
                 processedImage = new WriteableBitmap(originalImage);
                 displayedImage.Source = originalImage;
 
-                setGlobalGrayPixels();
+                SetColorsFromPixelsArray();
+                SetGrayPixels();
             }
             catch (Exception ex)
             {
@@ -88,7 +88,7 @@ namespace Grafika.Views
             }
         }
 
-        private void NormalizeHistogram_Click(object sender, RoutedEventArgs e)
+        private void StretchHistogram_Click(object sender, RoutedEventArgs e)
         {
             if (originalImage != null)
             {
@@ -106,28 +106,27 @@ namespace Grafika.Views
 
         private void StretchHistogram()
         {
-            int min, max;
-            int[] grayscalePixels = new int[globalPixelsAsColors.Count];
+            int[] grayscalePixels = new int[PixelsAsColors.Count];
 
-            for (int i = 0; i < globalPixelsAsColors.Count; i++)
+            for (int i = 0; i < PixelsAsColors.Count; i++)
             {
-                grayscalePixels[i] = ((globalPixelsAsColors[i].R + globalPixelsAsColors[i].B + globalPixelsAsColors[i].G) / 3);
+                grayscalePixels[i] = ((PixelsAsColors[i].R + PixelsAsColors[i].B + PixelsAsColors[i].G) / 3);
             }
 
-            min = grayscalePixels.Min();
-            max = grayscalePixels.Max();
+            var min = grayscalePixels.Min();
+            var max = grayscalePixels.Max();
 
             for (int i = 0; i < grayscalePixels.Length; i++)
             {
-                grayscalePixels[i] = (int)((double)(grayscalePixels[i] - min) / (max - min) * 255);
+                grayscalePixels[i] = (int)(255 * (double)(grayscalePixels[i] - min) / (max - min));
             }
-            drawImageFromBytes(convertPixelsArrayToDrawableArray(grayscalePixels));
+            ImageFromBytes(PixelsArrayToDrawableArray(grayscalePixels));
         }
 
         private void EqualizeHistogram()
         {
-            int[] grayscalePixels = calculateGrayPixels();
-            int numberOfPixels = globalPixels.Length;
+            int[] grayscalePixels = CalculateGrayPixels();
+            int numberOfPixels = Pixels.Length;
 
             int[] cdf = new int[256];
             cdf[0] = grayscalePixels[0];
@@ -136,24 +135,29 @@ namespace Grafika.Views
                 cdf[i] = cdf[i - 1] + grayscalePixels[i];
             }
 
+            var min = cdf.Min();
+            var max = cdf.Max();
+
             byte[] equalizedPixels = new byte[numberOfPixels];
             for (int i = 0; i < numberOfPixels; i += 4)
             {
-                int gray = (globalPixels[i] + globalPixels[i + 1] + globalPixels[i + 2]) / 3;
-                int newGray = (int)(255.0 * (cdf[gray] - cdf.Min()) / (cdf.Max() - cdf.Min()));
-                equalizedPixels[i] = equalizedPixels[i + 1] = equalizedPixels[i + 2] = (byte)newGray;
+                int gray = (Pixels[i] + Pixels[i + 1] + Pixels[i + 2]) / 3;
+                int newGray = (int)(255.0 * (cdf[gray] - min) / (max - min));
+                equalizedPixels[i] = (byte)newGray;
+                equalizedPixels[i + 1] = (byte)newGray;
+                equalizedPixels[i + 2] = (byte)newGray;
                 equalizedPixels[i + 3] = 255;
             }
-            drawImageFromBytes(equalizedPixels);
-            setGlobalColorsFromPixelsArray(equalizedPixels);
+            ImageFromBytes(equalizedPixels);
+            SetColorsFromPixelsArray(equalizedPixels);
         }
 
         private void ManualThreshold_Click(object sender, RoutedEventArgs e)
         {
             if (int.TryParse(ValueTextBox.Text, out int threshold))
             {
-                byte[] binarizedPixels = makeBinarizationFromThreshold(threshold);
-                drawImageFromBytes(binarizedPixels);
+                byte[] binarizedPixels = BinarizationFromThreshold(threshold);
+                ImageFromBytes(binarizedPixels);
             }
             else
             {
@@ -163,32 +167,36 @@ namespace Grafika.Views
 
         private void PercentBlackSelection_Click(object sender, RoutedEventArgs e)
         {
-            int[] histogramArray = calculateGrayPixels();
-            int numberOfPixels = globalPixelsAsColors.Count;
-            int seekedThreshold = 0, percentage = 50;
-            bool foundThreshold = false;
+            int[] histogramArray = CalculateGrayPixels();
+            int numberOfPixels = PixelsAsColors.Count;
+            int newThreshold = 0;
+            int percentage = 50;
+            bool isFoundThreshold = false;
             int cumulativeNumber = 0, index = 0;
 
-            while (!foundThreshold)
+            while (!isFoundThreshold)
             {
                 cumulativeNumber += histogramArray[index];
                 double currentPercentage = (double)cumulativeNumber / numberOfPixels * 100;
-                if (currentPercentage < percentage)   
+                if (currentPercentage < percentage)
+                {
                     index++;
+                }
                 else
-                    foundThreshold = true;
-
-                seekedThreshold = index;
+                {
+                    isFoundThreshold = true;
+                }
+                newThreshold = index;
             }
-            byte[] binarized = makeBinarizationFromThreshold(seekedThreshold);
+            byte[] binarized = BinarizationFromThreshold(newThreshold);
 
-            drawImageFromBytes(binarized);
+            ImageFromBytes(binarized);
         }
 
         private void MeanIterativeSelection_Click(object sender, RoutedEventArgs e)
         {
             int threshold = 128;
-            int[] histogramArray = calculateGrayPixels();
+            int[] histogramArray = CalculateGrayPixels();
             while (true)
             {
                 int sumBelow = 0;
@@ -219,31 +227,30 @@ namespace Grafika.Views
                 threshold = newThreshold;
             }
 
-            byte[] binarizedPixels = makeBinarizationFromThreshold(threshold);
+            byte[] binarizedPixels = BinarizationFromThreshold(threshold);
 
-            drawImageFromBytes(binarizedPixels);
+            ImageFromBytes(binarizedPixels);
         }
 
-        private byte[] makeBinarizationFromThreshold(int threshold)
+        private byte[] BinarizationFromThreshold(int threshold)
         {
-            byte[] binarized = new byte[globalPixels.Length];
-            for (int i = 0; i < globalPixels.Length; i += 4)
+            byte[] binarized = new byte[Pixels.Length];
+            for (int i = 0; i < Pixels.Length; i += 4)
             {
-                binarized[i] = (byte)(globalPixelsAsGray[i] < threshold ? 0 : 255);
-                binarized[i + 1] = (byte)(globalPixelsAsGray[i + 1] < threshold ? 0 : 255);
-                binarized[i + 2] = (byte)(globalPixelsAsGray[i + 2] < threshold ? 0 : 255);
+                binarized[i] = (byte)(PixelsAsGray[i] < threshold ? 0 : 255);
+                binarized[i + 1] = (byte)(PixelsAsGray[i + 1] < threshold ? 0 : 255);
+                binarized[i + 2] = (byte)(PixelsAsGray[i + 2] < threshold ? 0 : 255);
                 binarized[i + 3] = 255;
             }
 
             return binarized;
         }
 
-
-        private byte[] convertPixelsArrayToDrawableArray(int[] array)
+        private byte[] PixelsArrayToDrawableArray(int[] array)
         {
-            byte[] bytes = new byte[globalPixels.Length];
+            byte[] bytes = new byte[Pixels.Length];
             int index = 0;
-            for (int i = 0; i < globalPixels.Length; i += 4)
+            for (int i = 0; i < Pixels.Length; i += 4)
             {
                 bytes[i] = (byte)array[index];
                 bytes[i + 1] = (byte)array[index];
@@ -253,56 +260,54 @@ namespace Grafika.Views
             }
             return bytes;
         }
-
-        private void drawImageFromBytes(byte[] bytes)
-        {
-            processedImage.WritePixels(new Int32Rect(0, 0, globalWidth, globalHeight), bytes, stride, 0);
-
-            displayedImage.Source = processedImage;
-        }
-
-        private void setGlobalColorsFromPixelsArray()
-        {
-            globalPixelsAsColors.Clear();
-            for (int i = 0; i + 3 < globalPixels.Length; i += 4)
-            {
-                globalPixelsAsColors.Add(Color.FromArgb(255, globalPixels[i + 2], globalPixels[i + 1], globalPixels[i]));
-            }
-        }
-
-        private void setGlobalColorsFromPixelsArray(byte[] array)
-        {
-            globalPixelsAsColors.Clear();
-            for (int i = 0; i + 3 < array.Length; i += 4)
-            {
-                globalPixelsAsColors.Add(Color.FromArgb(255, array[i + 2], array[i + 1], array[i]));
-            }
-        }
-
-        private int[] calculateGrayPixels()
+        
+        private int[] CalculateGrayPixels()
         {
             int[] grayscaleBytes = new int[256];
             int average;
 
-
-            for (int i = 0; i < globalPixelsAsColors.Count; i++)
+            for (int i = 0; i < PixelsAsColors.Count; i++)
             {
-                average = ((globalPixelsAsColors[i].R + globalPixelsAsColors[i].B + globalPixelsAsColors[i].G) / 3);
+                average = ((PixelsAsColors[i].R + PixelsAsColors[i].B + PixelsAsColors[i].G) / 3);
                 grayscaleBytes[average]++;
             }
             return grayscaleBytes;
         }
 
-        private void setGlobalGrayPixels()
+        private void ImageFromBytes(byte[] bytes)
+        {
+            processedImage.WritePixels(new Int32Rect(0, 0, Width, Height), bytes, stride, 0);
+            displayedImage.Source = processedImage;
+        }
+
+        private void SetColorsFromPixelsArray()
+        {
+            PixelsAsColors.Clear();
+            for (int i = 0; i + 3 < Pixels.Length; i += 4)
+            {
+                PixelsAsColors.Add(Color.FromArgb(255, Pixels[i + 2], Pixels[i + 1], Pixels[i]));
+            }
+        }
+
+        private void SetColorsFromPixelsArray(byte[] array)
+        {
+            PixelsAsColors.Clear();
+            for (int i = 0; i + 3 < array.Length; i += 4)
+            {
+                PixelsAsColors.Add(Color.FromArgb(255, array[i + 2], array[i + 1], array[i]));
+            }
+        }
+
+        private void SetGrayPixels()
         {
             int average;
+            PixelsAsGray = new int[Pixels.Length];
 
-            globalPixelsAsGray = new int[globalPixels.Length];
-            for (int i = 0; i < globalPixels.Length; i += 4)
+            for (int i = 0; i < Pixels.Length; i += 4)
             {
-                average = (globalPixels[i] + globalPixels[i + 1] + globalPixels[i + 2]) / 3;
-                globalPixelsAsGray[i] = globalPixelsAsGray[i + 1] = globalPixelsAsGray[i + 2] = average;
-                globalPixelsAsGray[i + 3] = 255;
+                average = (Pixels[i] + Pixels[i + 1] + Pixels[i + 2]) / 3;
+                PixelsAsGray[i] = PixelsAsGray[i + 1] = PixelsAsGray[i + 2] = average;
+                PixelsAsGray[i + 3] = 255;
             }
         }
     }

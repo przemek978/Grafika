@@ -61,5 +61,12 @@ namespace Grafika
             histBin.Show();
             this.Hide();
         }
+
+        private void Curve_Click(object sender, RoutedEventArgs e)
+        {
+            BezierCurve curve = new BezierCurve();
+            curve.Show();
+            this.Hide();
+        }
     }
 }

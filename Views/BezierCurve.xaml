@@ -11,10 +11,8 @@
             <ColumnDefinition Width="5*"></ColumnDefinition>
             <ColumnDefinition Width="1*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <Canvas Grid.Column="0" Name="canvas" Background="White"/>
-        <StackPanel Grid.Column="1">
-            <TextBox Name="degreeTextBox"  Text="2"/>
-            <Button Content="Draw Bezier Curve" Click="DrawBezierCurveButton_Click"/>
-        </StackPanel>
+        <Canvas Grid.Column="0" Name="canvas" Background="White" MouseMove="Canvas_MouseMove" MouseLeftButtonUp="Canvas_MouseUp" MouseLeftButtonDown="SetPointClick"/>
+        <TextBox Name="degreeTextBox" Grid.Column="1" Text="3"/>
+            <Button Content="Wyczyść" Click="ClearCanvas"/>
     </Grid>
 </Window>

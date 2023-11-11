@@ -12,7 +12,13 @@
             <ColumnDefinition Width="1*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Canvas Grid.Column="0" Name="canvas" Background="White" MouseMove="Canvas_MouseMove" MouseLeftButtonUp="Canvas_MouseUp" MouseLeftButtonDown="SetPointClick"/>
-        <TextBox Name="degreeTextBox" Grid.Column="1" Text="3"/>
-            <Button Content="Wyczyść" Click="ClearCanvas"/>
+        <Grid  Grid.Column="1" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"></RowDefinition>
+                <RowDefinition Height="10*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <TextBox Name="degreeTextBox" Grid.Row="0" Text="3"/>
+            <Button Content="Wyczyść" Grid.Row="1" Click="ClearCanvas"/>
+        </Grid>
     </Grid>
 </Window>

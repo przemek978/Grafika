@@ -68,5 +68,12 @@ namespace Grafika
             curve.Show();
             this.Hide();
         }
+
+        private void Transform2D_Click(object sender, RoutedEventArgs e)
+        {
+            Transformations2D transformations2D = new Transformations2D();
+            transformations2D.Show();
+            this.Hide();
+        }
     }
 }

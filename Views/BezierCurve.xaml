@@ -5,21 +5,41 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Grafika.Views"
         mc:Ignorable="d"
-        Title="BezierCurve" Height="450" Width="800">
+        Title="BezierCurve" Height="600" Width="800" MinHeight="550">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="5*"></ColumnDefinition>
-            <ColumnDefinition Width="1*"></ColumnDefinition>
+            <ColumnDefinition Width="2*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Canvas Grid.Column="0" Name="canvas" Background="White" MouseMove="Canvas_MouseMove" MouseLeftButtonUp="Canvas_MouseUp" MouseLeftButtonDown="SetPointClick"/>
         <Grid  Grid.Column="1" >
             <Grid.RowDefinitions>
                 <RowDefinition Height="1*"></RowDefinition>
-                <RowDefinition Height="5*"></RowDefinition>
-                <RowDefinition Height="5*"></RowDefinition>
+                <RowDefinition Height="2*"></RowDefinition>
+                <RowDefinition Height="3*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
             <TextBox Name="degreeTextBox" Grid.Row="0"/>
-            <ListBox x:Name="pointListBox" Grid.Row="1" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" ItemsSource="{Binding points}">
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*"></RowDefinition>
+                    <RowDefinition Height="1*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,0,5">
+                    <Label Content="X:"></Label>
+                    <TextBox x:Name="XTextBox"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="0,0,0,5">
+                    <Label Content="Y:"></Label>
+                    <TextBox x:Name="YTextBox"/>
+                </StackPanel>
+                <Button Grid.Row="1" Grid.ColumnSpan="2" Content="Zatwierdź" Click="EditPoint_Click"/>
+            </Grid>
+            <ListBox x:Name="pointListBox" Grid.Row="2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" ItemsSource="{Binding points}" SelectionChanged="pointListBox_SelectionChanged">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
@@ -30,7 +50,7 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <Button Content="Wyczyść" Grid.Row="2" Click="ClearCanvas"/>
+            <Button Content="Wyczyść" Grid.Row="3" Click="ClearCanvas"/>
         </Grid>
     </Grid>
 </Window>

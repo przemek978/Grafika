@@ -25,6 +25,7 @@ namespace Grafika.Views
         private int degree = 3; // Stopień krzywej Béziera
         List<Point> controlPoints;
         private Point selectedPoint;
+        private int selectedPointIndex;
         private bool isDragging = false;
 
         public BezierCurve()
@@ -73,7 +74,7 @@ namespace Grafika.Views
             {
                 if (degree >= controlPoints.Count)
                 {
-                    controlPoints.Add(new Point(mousePosition.X, mousePosition.Y));
+                    controlPoints.Add(new Point(Math.Round(mousePosition.X, 2), Math.Round(mousePosition.Y, 2)));
                 }
                 else
                 {
@@ -87,6 +88,19 @@ namespace Grafika.Views
             }
             DrawBezierCurve();
             DrawPoints();
+        }
+
+        private void pointListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (pointListBox.SelectedItem != null)
+            {
+                Point selectedPoint = (Point)pointListBox.SelectedItem;
+
+                XTextBox.Text = selectedPoint.X.ToString();
+                YTextBox.Text = selectedPoint.Y.ToString();
+
+                selectedPointIndex = controlPoints.IndexOf(selectedPoint);
+            }
         }
 
         public void DrawPoints()
@@ -105,7 +119,6 @@ namespace Grafika.Views
             }
             pointListBox.Items.Refresh();
         }
-
 
         private void DrawBezierCurve()
         {
@@ -210,5 +223,24 @@ namespace Grafika.Views
             controlPoints.Clear();
         }
 
+        private void EditPoint_Click(object sender, RoutedEventArgs e)
+        {
+            Point selectedPoint = (Point)pointListBox.SelectedItem;
+            if (selectedPoint != null)
+            {
+                selectedPoint.X = double.Parse(XTextBox.Text);
+                selectedPoint.Y = double.Parse(YTextBox.Text);
+                controlPoints[selectedPointIndex] = selectedPoint;
+
+                RefreshCanvas();
+            }
+        }
+        private void RefreshCanvas()
+        {
+            pointListBox.Items.Refresh();
+            canvas.Children.Clear();
+            DrawBezierCurve();
+            DrawPoints();
+        }
     }
 }

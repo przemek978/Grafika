@@ -29,7 +29,7 @@ namespace Grafika.Views
         private bool isDrawing = false;
         private bool isDragging = false;
         private Point startPoint;
-        private Shape currentShape;
+        private Polygon currentPolygon;
         private List<Polygon> shapes = new List<Polygon>();
         private List<Point> points = new List<Point>();
         Point centerOfPolygon;
@@ -38,15 +38,14 @@ namespace Grafika.Views
         public Transformations2D()
         {
             InitializeComponent();
-            this.WindowState = WindowState.Maximized;
-            points.Add(new Point(200, 200));
-            points.Add(new Point(400, 200));
-            points.Add(new Point(450, 400));
-            points.Add(new Point(400, 600));
-            points.Add(new Point(200, 600));
-            centerOfPolygon = new Point((canvas.ActualWidth / 2) - 20, canvas.ActualHeight / 2);
+            Load("E:\\Projekty\\Grafika\\Data\\DATA.xml");
+            //StartPoints();
+            Closed += Window_Closed;
+
+            //List////////////////////////////////////////////////////////////////////////////////////////////////////
             pointListBox.ItemsSource = points;
             DataContext = this;
+            this.WindowState = WindowState.Maximized;
         }
 
         ////Metody do obsługi canvas//////////////////////////////////////////////////////////////////////////////////
@@ -54,9 +53,9 @@ namespace Grafika.Views
         {
             canvas.Focus();
             startPoint = e.GetPosition(canvas);
-            currentShape = GetShapeUnderMouse(startPoint);
+            currentPolygon = GetShapeUnderMouse();
 
-            if (currentShape != null)
+            if (currentPolygon != null)
             {
                 isDragging = true;
                 isDrawing = false;
@@ -69,44 +68,54 @@ namespace Grafika.Views
 
         }
 
-        private void Canvas_MouseMove(object sender, MouseEventArgs e)
+        private void Canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            Point endPoint = e.GetPosition(canvas);
             if (isDrawing)
             {
+                Point mousePoint = e.GetPosition(canvas);
 
-                //if (currentShape == null)
-                //{
-                //    currentShape = new System.Windows.Shapes.Polygon
-                //    {
-                //        Points = new PointCollection(points),
-                //        Stroke = Brushes.Black,
-                //        StrokeThickness = 1,
-                //        Fill = Brushes.LightBlue
-                //    };
-                //    currentShape.Fill = Brushes.Green;
-                //    shapes.Add(currentShape);
-                //    canvas.Children.Add(currentShape);
-                //}
-                //currentShape.Width = Math.Abs(startPoint.X - endPoint.X);
-                //currentShape.Height = Math.Abs(startPoint.Y - endPoint.Y);
-                //currentShape.Stroke = Brushes.Black;
-            }
-            else if (isDragging && currentShape != null)
-            {
-                var shape = currentShape as Polygon;
-                Point newPoint = e.GetPosition(canvas);
-
-                double offsetX = newPoint.X - startPoint.X;
-                double offsetY = newPoint.Y - startPoint.Y;
-
-                // Przesuń współrzędne wszystkich punktów wielokąta
-                for (int i = 0; i < shape.Points.Count; i++)
+                if (e.LeftButton == MouseButtonState.Pressed)
                 {
-                    shape.Points[i] = new Point(shape.Points[i].X + offsetX, shape.Points[i].Y + offsetY);
+                    points.Add(mousePoint);
+                    pointListBox.Items.Refresh();
                 }
 
-                startPoint = newPoint;
+            }
+            if (e.RightButton == MouseButtonState.Pressed)
+            {
+                Draw();
+            }
+        }
+
+        private void Canvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isDragging & currentPolygon != null)
+            {
+                Point currentPoint = Mouse.GetPosition(this);
+                double deltaX = currentPoint.X - startPoint.X;
+                double deltaY = currentPoint.Y - startPoint.Y;
+
+                if (Keyboard.IsKeyDown(Key.LeftCtrl))
+                {
+                    centerOfPolygon = new Point((canvas.ActualWidth / 2), canvas.ActualHeight / 2);
+                    double alfa = Math.Atan2(deltaY, deltaX);
+                    Rotation(alfa, centerOfPolygon);
+                }
+                else if (Keyboard.IsKeyDown(Key.LeftAlt))
+                {
+                    double scale = 1 + (deltaY / 100.0); // Dostosuj wartość skali do potrzeb
+                    Scale(scale, currentPoint);
+                }
+                else
+                {
+                    var shape = currentPolygon;
+
+                    for (int i = 0; i < shape.Points.Count; i++)
+                    {
+                        shape.Points[i] = new Point(shape.Points[i].X + deltaX, shape.Points[i].Y + deltaY);
+                    }
+                }
+                startPoint = currentPoint;
             }
         }
 
@@ -114,14 +123,10 @@ namespace Grafika.Views
         {
             isDrawing = false;
             isDragging = false;
-            //currentShape = GetShapeUnderMouse(startPoint);
+            //currentPolygon = GetShapeUnderMouse(startPoint);
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////
-        private void AddPointButton_Click(object sender, RoutedEventArgs e)
-        {
-            AddPoint();
-        }
 
         private void AddPoint()
         {
@@ -134,17 +139,17 @@ namespace Grafika.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Nieprawidłowe wartości wprowadzone do utworzenia kształtu.");
+                MessageBox.Show("Nieprawidłowe wartości wprowadzone do dodania punktu");
             }
-        }
-
-        private void AddPolygonButton_Click(object sender, RoutedEventArgs e)
-        {
-            Draw();
         }
 
         private void Draw()
         {
+            if(points.Count < 3)
+            {
+                MessageBox.Show("Za mało punktów do utworzenia kształtu. Dodaj conajmniej 3");
+                return;
+            }
             Polygon polygon = new Polygon
             {
                 Points = new PointCollection(points),
@@ -162,7 +167,7 @@ namespace Grafika.Views
         {
             try
             {
-                var shape = currentShape as Polygon;
+                var shape = currentPolygon as Polygon;
                 List<Point> rotatedPoints = new List<Point>();
                 foreach (var point in shape.Points)
                 {
@@ -177,7 +182,7 @@ namespace Grafika.Views
             }
             catch (Exception ex)
             {
-
+                MessageBox.Show("Nieprawidłowe wartości wprowadzone do przesunięcia");
             }
         }
 
@@ -185,15 +190,21 @@ namespace Grafika.Views
         {
             try
             {
-                var shape = currentShape as Polygon;
+                var shape = currentPolygon;
+                if(shape == null)
+                {
+                    MessageBox.Show("Nie wybrano kształtu");
+                    return;
+                }
                 List<Point> rotatedPoints = new List<Point>();
+                var rad = (alfa * (Math.PI)) / 180;
                 foreach (var point in shape.Points)
                 {
                     double translatedX = point.X - givenPoint.X;
                     double translatedY = point.Y - givenPoint.Y;
 
-                    double x = givenPoint.X + translatedX * Math.Cos(alfa) - translatedY * Math.Sin(alfa);
-                    double y = givenPoint.Y + translatedX * Math.Sin(alfa) + translatedY * Math.Cos(alfa);
+                    double x = givenPoint.X + translatedX * Math.Cos(rad) - translatedY * Math.Sin(rad);
+                    double y = givenPoint.Y + translatedX * Math.Sin(rad) + translatedY * Math.Cos(rad);
 
                     rotatedPoints.Add(new Point(x, y));
 
@@ -202,7 +213,7 @@ namespace Grafika.Views
             }
             catch (Exception ex)
             {
-
+                MessageBox.Show("Nieprawidłowe wartości wprowadzone do obrócenia");
             }
         }
 
@@ -210,7 +221,12 @@ namespace Grafika.Views
         {
             try
             {
-                var shape = currentShape as Polygon;
+                var shape = currentPolygon as Polygon;
+                if (shape == null)
+                {
+                    MessageBox.Show("Nie wybrano kształtu");
+                    return;
+                }
                 List<Point> rotatedPoints = new List<Point>();
                 foreach (var point in shape.Points)
                 {
@@ -224,9 +240,20 @@ namespace Grafika.Views
             }
             catch (Exception ex)
             {
-
+                MessageBox.Show("Nieprawidłowe wartości wprowadzone do skalowania");
             }
         }
+
+        private void AddPointButton_Click(object sender, RoutedEventArgs e)
+        {
+            AddPoint();
+        }
+
+        private void AddPolygonButton_Click(object sender, RoutedEventArgs e)
+        {
+            Draw();
+        }
+
 
         private void TranslationButton_Click(object sender, RoutedEventArgs e)
         {
@@ -238,80 +265,117 @@ namespace Grafika.Views
 
         private void RotationButton_Click(object sender, RoutedEventArgs e)
         {
+            centerOfPolygon = new Point((canvas.ActualWidth / 2), canvas.ActualHeight / 2);
             if (double.TryParse(translationXTextBox.Text, out double x) & double.TryParse(translationYTextBox.Text, out double y) & double.TryParse(rotationAngleTextBox.Text, out double alfa))
             {
                 Point givenPoint = new Point(x, y);
-                Rotation(30, centerOfPolygon);
+                Rotation(alfa, givenPoint);
 
+            }
+            else if (alfa != 0)
+            {
+                Rotation(alfa, centerOfPolygon);
+            }
+            else
+            {
+                MessageBox.Show("Nieprawidłowe wartości wprowadzone do obrócenia");
             }
         }
 
         private void ScalingButton_Click(object sender, RoutedEventArgs e)
         {
+            centerOfPolygon = new Point((canvas.ActualWidth / 2), canvas.ActualHeight / 2);
             if (double.TryParse(translationXTextBox.Text, out double x) & double.TryParse(translationYTextBox.Text, out double y) & double.TryParse(scalingFactorTextBox.Text, out double k))
             {
                 Point givenPoint = new Point(x, y);
+                Scale(k, givenPoint);
+            }
+            else if (k != 0)
+            {
                 Scale(k, centerOfPolygon);
+            }
+            else
+            {
+                MessageBox.Show("Nieprawidłowe wartości wprowadzone do skalowania");
             }
         }
 
         /////Zapis i odczyt z pliku//////////////////////////////////////////////////////////////////////////////////////////////////
-        private void SaveToFileButton_Click(object sender, RoutedEventArgs e)
+        private void Save(string fileName)
         {
-            Microsoft.Win32.SaveFileDialog dialog = new Microsoft.Win32.SaveFileDialog();
-            dialog.Filter = "XML Files|*.xml";
-            if (dialog.ShowDialog() == true)
+            List<PolygonData> shapeDataList = new List<PolygonData>();
+
+            foreach (var shape in shapes)
             {
-                List<PolygonData> shapeDataList = new List<PolygonData>();
-
-                foreach (var shape in shapes)
+                var pointsList = new List<Point>();
+                foreach (var point in shape.Points)
                 {
-                    var pointsList = new List<Point>();
-                    foreach( var point in shape.Points)
-                    {
-                        pointsList.Add(point);
-                    }
-
-                    shapeDataList.Add(new PolygonData
-                    {
-                        points = pointsList,
-                        FillColor = shape.Fill.ToString(),
-                    }) ;
-
+                    pointsList.Add(point);
                 }
 
-                PolygonList canvasData = new PolygonList { Shapes = shapeDataList };
-
-                using (StreamWriter sw = new StreamWriter(dialog.FileName))
+                shapeDataList.Add(new PolygonData
                 {
-                    XmlSerializer serializer = new XmlSerializer(typeof(PolygonList));
-                    serializer.Serialize(sw, canvasData);
+                    points = pointsList,
+                    FillColor = shape.Fill.ToString(),
+                });
+
+            }
+
+            PolygonList polygonList = new PolygonList { Shapes = shapeDataList };
+
+            using (StreamWriter sw = new StreamWriter(fileName))
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(PolygonList));
+                serializer.Serialize(sw, polygonList);
+            }
+        }
+
+        private void Load(string fileName)
+        {
+            using (StreamReader sr = new StreamReader(fileName))
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(PolygonList));
+                PolygonList polygonList = (PolygonList)serializer.Deserialize(sr);
+
+                foreach (var shapeData in polygonList.Shapes)
+                {
+                    PolygonData polygonData = (PolygonData)shapeData;
+                    var polygon = new Polygon
+                    {
+                        Points = new PointCollection(polygonData.points),
+                        Fill = (SolidColorBrush)(new BrushConverter().ConvertFrom(polygonData.FillColor)),
+                        Stroke = Brushes.Black,
+                        StrokeThickness = 3,
+                    };
+                    canvas.Children.Add(polygon);
+                    shapes.Add(polygon);
                 }
             }
         }
+
+        private void SaveToFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = "XML Files|*.xml";
+            if (dialog.ShowDialog() == true)
+            {
+                Save(dialog.FileName);
+            }
+        }
+
         private void LoadFromFileButton_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Filter = "XML Files|*.xml";
             if (dialog.ShowDialog() == true)
             {
-                using (StreamReader sr = new StreamReader(dialog.FileName))
-                {
-                    XmlSerializer serializer = new XmlSerializer(typeof(CanvasData));
-                    CanvasData canvasData = (CanvasData)serializer.Deserialize(sr);
-
-                    foreach (var shapeData in canvasData.Shapes)
-                    {
-                        RectangleData rectangleData = (RectangleData)shapeData;
-                        Draw();
-                    }
-                }
+                Load(dialog.FileName);
             }
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////
 
         ////Wyszukiwanie istniejących//////////////////////////////////////////////////////////////////////////////////
-        private Shape GetShapeUnderMouse(Point point)
+        private Polygon GetShapeUnderMouse()
         {
             foreach (var shape in canvas.Children)
             {
@@ -326,6 +390,7 @@ namespace Grafika.Views
 
             return null;
         }
+
         private bool IsPointInsidePolygon(Point point, PointCollection polygonPoints)
         {
             int count = polygonPoints.Count;
@@ -353,6 +418,27 @@ namespace Grafika.Views
             rotationAngleTextBox.Text = "";
             scalingFactorTextBox.Text = "";
             shapes.Clear();
+        }
+
+        private void ClearPointButton_Click(object sender, RoutedEventArgs e)
+        {
+            points.Clear();
+            pointListBox.Items.Refresh();
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            GC.SuppressFinalize(this);
+            Save("E:\\Projekty\\Grafika\\Data\\DATA.xml");
+        }
+
+        private void StartPoints()
+        {
+            points.Add(new Point(200, 200));
+            points.Add(new Point(400, 200));
+            points.Add(new Point(450, 400));
+            points.Add(new Point(400, 600));
+            points.Add(new Point(200, 600));
         }
     }
 }

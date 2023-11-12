@@ -18,7 +18,7 @@
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="Przeksztalcenia 2D" FontSize="24" FontWeight="Bold" TextAlignment="Center" Margin="0,5,0,5"/>
             <Border Grid.Row="1" Background="White" Name="canvasBorder" CornerRadius="10" Margin="5">
-                <Canvas Grid.Row="1" Background="Transparent" Name="canvas" MouseLeftButtonDown="Canvas_MouseLeftButtonDown" MouseLeftButtonUp="Canvas_MouseLeftButtonUp" MouseMove="Canvas_MouseMove" Focusable="True"/>
+                <Canvas Grid.Row="1" Background="Transparent" Name="canvas" MouseDown="Canvas_MouseDown" MouseLeftButtonDown="Canvas_MouseLeftButtonDown" MouseLeftButtonUp="Canvas_MouseLeftButtonUp" MouseMove="Canvas_MouseMove" Focusable="True"/>
             </Border>
         </Grid>
         <Grid Grid.Column="1">
@@ -38,7 +38,8 @@
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition></RowDefinition>
-                    <RowDefinition></RowDefinition>
+                    <RowDefinition Height="0.5*"></RowDefinition>
+                    <RowDefinition Height="0.5*"></RowDefinition>
                 </Grid.RowDefinitions>
                 <StackPanel Grid.Row="0" Grid.Column="0">
                     <Label Content="X:" x:Name="XLabel"/>
@@ -48,10 +49,13 @@
                     <Label Content="Y:" x:Name="YLabel"/>
                     <TextBox x:Name="YTextBox"/>
                 </StackPanel>
-                <Button Grid.Row="2" Grid.Column="0" Click="AddPointButton_Click">
+                <Button Grid.Row="1" Grid.Column="0" Click="AddPointButton_Click">
                     <TextBlock Text="Dodaj wierzchołek" TextWrapping="Wrap" TextAlignment="Center"/>
                 </Button>
-                <Button Grid.Row="2" Grid.Column="1"  Click="AddPolygonButton_Click">
+                <Button Grid.Row="2" Grid.Column="0" Click="ClearPointButton_Click">
+                    <TextBlock Text="Usuń wierzchołki" TextWrapping="Wrap" TextAlignment="Center"/>
+                </Button>
+                <Button Grid.Row="1" Grid.Column="1" Grid.RowSpan="2" Click="AddPolygonButton_Click" >
                     <TextBlock Text="Dodaj wielokąt" TextWrapping="Wrap" TextAlignment="Center"/>
                 </Button>
                 <!--<StackPanel Grid.Row="1" Grid.Column="0">

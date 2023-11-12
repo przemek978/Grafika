@@ -31,6 +31,9 @@ namespace Grafika.Views
         {
             InitializeComponent();
             controlPoints = new List<Point>();
+            degreeTextBox.Text = degree.ToString();
+            pointListBox.ItemsSource = controlPoints;
+            DataContext = this;
             DrawPoints();
         }
 
@@ -100,6 +103,7 @@ namespace Grafika.Views
                 Canvas.SetTop(ellipse, p.Y - ellipse.Height / 2);
                 canvas.Children.Add(ellipse);
             }
+            pointListBox.Items.Refresh();
         }
 
 
@@ -135,9 +139,9 @@ namespace Grafika.Views
             //    bezierPoints.Add(point);
             //}
 
-            for (double t = 0; t <= 1; t += 0.005)
+            for (double i = 0; i <= 1; i += 0.005)
             {
-                Point bezierPoint = CalculateBezierPoint(t);
+                Point bezierPoint = CalculateBezierPoint(i);
                 bezierPoints.Add(bezierPoint);
             }
 
@@ -161,7 +165,6 @@ namespace Grafika.Views
 
         private Point CalculateBezierPoint(double t)
         {
-            //int n = degree;
             int n = controlPoints.Count - 1;
 
             double x = 0;

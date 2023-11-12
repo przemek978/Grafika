@@ -15,10 +15,22 @@
         <Grid  Grid.Column="1" >
             <Grid.RowDefinitions>
                 <RowDefinition Height="1*"></RowDefinition>
-                <RowDefinition Height="10*"></RowDefinition>
+                <RowDefinition Height="5*"></RowDefinition>
+                <RowDefinition Height="5*"></RowDefinition>
             </Grid.RowDefinitions>
-            <TextBox Name="degreeTextBox" Grid.Row="0" Text="3"/>
-            <Button Content="Wyczyść" Grid.Row="1" Click="ClearCanvas"/>
+            <TextBox Name="degreeTextBox" Grid.Row="0"/>
+            <ListBox x:Name="pointListBox" Grid.Row="1" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" ItemsSource="{Binding points}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding X}" Margin="5"/>
+                            <TextBlock Text="," Margin="0,5,5,5"/>
+                            <TextBlock Text="{Binding Y}" Margin="5"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <Button Content="Wyczyść" Grid.Row="2" Click="ClearCanvas"/>
         </Grid>
     </Grid>
 </Window>

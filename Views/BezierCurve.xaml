@@ -14,7 +14,7 @@
         <Canvas Grid.Column="0" Name="canvas" Background="White" MouseMove="Canvas_MouseMove" MouseLeftButtonUp="Canvas_MouseUp" MouseLeftButtonDown="SetPointClick"/>
         <Grid  Grid.Column="1" >
             <Grid.RowDefinitions>
-                <RowDefinition Height="1*"></RowDefinition>
+                <RowDefinition Height="0.7*"></RowDefinition>
                 <RowDefinition Height="2*"></RowDefinition>
                 <RowDefinition Height="3*"></RowDefinition>
                 <RowDefinition Height="*"></RowDefinition>
@@ -26,6 +26,7 @@
                     <ColumnDefinition></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="1.5*"></RowDefinition>
                     <RowDefinition Height="1*"></RowDefinition>
                     <RowDefinition Height="1*"></RowDefinition>
                 </Grid.RowDefinitions>
@@ -37,7 +38,8 @@
                     <Label Content="Y:"></Label>
                     <TextBox x:Name="YTextBox"/>
                 </StackPanel>
-                <Button Grid.Row="1" Grid.ColumnSpan="2" Content="Zatwierdź" Click="EditPoint_Click"/>
+                <Button Grid.Row="1" Grid.ColumnSpan="2" Content="Dodaj" Click="AddPoint_Click"/>
+                <Button Grid.Row="2" Grid.ColumnSpan="2" Content="Zatwierdź" Click="EditPoint_Click"/>
             </Grid>
             <ListBox x:Name="pointListBox" Grid.Row="2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" ItemsSource="{Binding points}" SelectionChanged="pointListBox_SelectionChanged">
                 <ListBox.ItemTemplate>

@@ -223,11 +223,18 @@ namespace Grafika.Views
             controlPoints.Clear();
         }
 
+        private void AddPoint_Click(object sender, RoutedEventArgs e)
+        {
+            var newPoint = new Point(double.Parse(XTextBox.Text), double.Parse(YTextBox.Text));
+            controlPoints.Add(newPoint);
+            RefreshCanvas();
+        }
+
         private void EditPoint_Click(object sender, RoutedEventArgs e)
         {
             Point selectedPoint = (Point)pointListBox.SelectedItem;
             if (selectedPoint != null)
-            {
+            { 
                 selectedPoint.X = double.Parse(XTextBox.Text);
                 selectedPoint.Y = double.Parse(YTextBox.Text);
                 controlPoints[selectedPointIndex] = selectedPoint;
@@ -242,5 +249,6 @@ namespace Grafika.Views
             DrawBezierCurve();
             DrawPoints();
         }
+
     }
 }

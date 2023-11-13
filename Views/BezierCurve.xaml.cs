@@ -36,6 +36,7 @@ namespace Grafika.Views
             pointListBox.ItemsSource = controlPoints;
             DataContext = this;
             DrawPoints();
+            Closed += Window_Closed;
         }
 
         private void Canvas_MouseMove(object sender, MouseEventArgs e)
@@ -74,7 +75,7 @@ namespace Grafika.Views
             {
                 if (degree >= controlPoints.Count)
                 {
-                    controlPoints.Add(new Point(Math.Round(mousePosition.X, 2), Math.Round(mousePosition.Y, 2)));
+                    controlPoints.Add(new Point(mousePosition.X, mousePosition.Y));
                 }
                 else
                 {
@@ -96,8 +97,8 @@ namespace Grafika.Views
             {
                 Point selectedPoint = (Point)pointListBox.SelectedItem;
 
-                XTextBox.Text = selectedPoint.X.ToString();
-                YTextBox.Text = selectedPoint.Y.ToString();
+                XTextBox.Text = selectedPoint.X.ToString("F2");
+                YTextBox.Text = selectedPoint.Y.ToString("F2");
 
                 selectedPointIndex = controlPoints.IndexOf(selectedPoint);
             }
@@ -144,13 +145,6 @@ namespace Grafika.Views
         private PointCollection CalculateBezierPoints()
         {
             PointCollection bezierPoints = new PointCollection();
-
-            //for (int i = 0; i <= degree; i++)
-            //{
-            //    double t = (double)i / degree;
-            //    Point point = CalculateBezierPoint(t);
-            //    bezierPoints.Add(point);
-            //}
 
             for (double i = 0; i <= 1; i += 0.005)
             {
@@ -225,21 +219,32 @@ namespace Grafika.Views
 
         private void AddPoint_Click(object sender, RoutedEventArgs e)
         {
-            var newPoint = new Point(double.Parse(XTextBox.Text), double.Parse(YTextBox.Text));
-            controlPoints.Add(newPoint);
+            if (degree >= controlPoints.Count && double.TryParse(XTextBox.Text, out double X) & double.TryParse(YTextBox.Text, out double Y))
+            {
+                controlPoints.Add(new Point(X,Y));
+            }
+            else
+            {
+                MessageBox.Show($"Za dużo punktów, Stopień równy {degree} pozwala na dodanie {degree + 1} punktów");
+            }
             RefreshCanvas();
         }
 
         private void EditPoint_Click(object sender, RoutedEventArgs e)
         {
-            Point selectedPoint = (Point)pointListBox.SelectedItem;
-            if (selectedPoint != null)
-            { 
+            if (pointListBox.SelectedItem != null)
+            {
+                Point selectedPoint = (Point)pointListBox.SelectedItem;
                 selectedPoint.X = double.Parse(XTextBox.Text);
                 selectedPoint.Y = double.Parse(YTextBox.Text);
                 controlPoints[selectedPointIndex] = selectedPoint;
 
                 RefreshCanvas();
+            }
+            else
+            {
+                MessageBox.Show("Wybierz punkt do edycji");
+            
             }
         }
         private void RefreshCanvas()
@@ -248,6 +253,14 @@ namespace Grafika.Views
             canvas.Children.Clear();
             DrawBezierCurve();
             DrawPoints();
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            GC.SuppressFinalize(this);
+            MainWindow mainWindow = new MainWindow();
+            mainWindow.Show();
+            this.Close();
         }
 
     }

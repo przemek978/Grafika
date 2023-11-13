@@ -77,6 +77,7 @@ namespace Grafika.Views
                 if (e.LeftButton == MouseButtonState.Pressed)
                 {
                     points.Add(mousePoint);
+                    DrawPoints();
                     pointListBox.Items.Refresh();
                 }
 
@@ -84,6 +85,7 @@ namespace Grafika.Views
             if (e.RightButton == MouseButtonState.Pressed)
             {
                 Draw();
+                ClearPoints();
             }
         }
 
@@ -136,6 +138,7 @@ namespace Grafika.Views
                 double y = Convert.ToDouble(YTextBox.Text);
                 points.Add(new Point(x, y));
                 pointListBox.Items.Refresh();
+                DrawPoints();
             }
             catch (Exception ex)
             {
@@ -252,6 +255,7 @@ namespace Grafika.Views
         private void AddPolygonButton_Click(object sender, RoutedEventArgs e)
         {
             Draw();
+            ClearPoints();
         }
 
 
@@ -439,6 +443,31 @@ namespace Grafika.Views
             points.Add(new Point(450, 400));
             points.Add(new Point(400, 600));
             points.Add(new Point(200, 600));
+        }
+
+        public void DrawPoints()
+        {
+            foreach (var p in points)
+            {
+                Ellipse ellipse = new Ellipse
+                {
+                    Fill = Brushes.Red,
+                    Width = 8,
+                    Height = 8,
+                };
+                Canvas.SetLeft(ellipse, p.X - ellipse.Width / 2);
+                Canvas.SetTop(ellipse, p.Y - ellipse.Height / 2);
+                canvas.Children.Add(ellipse);
+            }
+            pointListBox.Items.Refresh();
+        }
+        public void ClearPoints()
+        {
+            canvas.Children.Clear();
+            foreach(var poly in shapes)
+            {
+                canvas.Children.Add(poly);
+            }
         }
     }
 }

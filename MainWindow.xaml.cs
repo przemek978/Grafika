@@ -75,5 +75,17 @@ namespace Grafika
             transformations2D.Show();
             this.Hide();
         }
+
+        private void Operators_Click(object sender, RoutedEventArgs e)
+        {
+            Operators operators = new Operators();
+            operators.Show();
+            this.Hide();
+        }
+
+        private void Analysis_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

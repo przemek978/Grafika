@@ -21,12 +21,15 @@ namespace Grafika.Views
     /// </summary>
     public partial class Operators : Window
     {
-        private Point origin;
-        private Point start;
+        //private Point origin;
+        //private Point start;
         private WriteableBitmap currentBitmap;
         private WriteableBitmap snapshot;
         private BitmapImage originalImage;
-        private string fileName;
+        private bool IsChangeOriginal = false;
+        int width;
+        int height;
+        //private string fileName;
 
         public Operators()
         {
@@ -76,7 +79,7 @@ namespace Grafika.Views
                 var stride = Width * bytesPerPixel;
 
                 byte[] pixelData = new byte[Height * stride];
-               // byte[] pixels = new byte[bpp * width * height];
+                // byte[] pixels = new byte[bpp * width * height];
 
                 originalImage.CopyPixels(pixelData, stride, 0);
                 //originalImage.CopyPixels(new Int32Rect(0, 0, Width, Height), pixelData, 3 * Width, 0);
@@ -86,6 +89,9 @@ namespace Grafika.Views
                 currentBitmap = new WriteableBitmap(Width, Height, 96, 96, PixelFormats.Rgb24, null);
                 currentBitmap.WritePixels(new Int32Rect(0, 0, Width, Height), pixelData, 3 * Width, 0);
 
+                width = currentBitmap.PixelWidth;
+                height = currentBitmap.PixelHeight;
+
                 displayedImage.Source = originalImage;
             }
             catch (Exception ex)
@@ -94,353 +100,302 @@ namespace Grafika.Views
             }
         }
 
-        private void Input_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            if (!int.TryParse(e.Text, out var result))
-            {
-                e.Handled = true;
-            }
-        }
-
-        private void ReloadImmage_Click(object sender, RoutedEventArgs e)
-        {
-            displayedImage.Source = snapshot;
-            currentBitmap = snapshot;
-        }
+        //private void Input_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        //{
+        //    if (!int.TryParse(e.Text, out var result))
+        //    {
+        //        e.Handled = true;
+        //    }
+        //}
 
         private void Dilatation_Click(object sender, RoutedEventArgs e)
         {
-            if (currentBitmap == null) { return; }
-            int width = currentBitmap.PixelWidth;
-            int height = currentBitmap.PixelHeight;
-            var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-
-            var pixels = new byte[width * height * 3];
-            currentBitmap.CopyPixels(pixels, width * 3, 0);
-            for (int i = 0; i < 3 * width * height;)
+            if (currentBitmap != null)
             {
-                var r = (int)pixels[i];
-                var g = (int)pixels[i + 1];
-                var b = (int)pixels[i + 2];
+                var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
+                var pixels = GetPixels();
 
-                var gray = (r + g + b) / 3;
-
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-
+                var newPixels = PerformDilatation(pixels, width, height);
+                if (newPixels != null)
+                {
+                    newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
+                    if (IsChangeOriginal)
+                        currentBitmap = newBitmap;
+                    displayedImage.Source = newBitmap;
+                }
             }
-            var newPixels = PerformDilatation(pixels, width, height);
-            if (newPixels != null)
+            else
             {
-                newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
-                currentBitmap = newBitmap;
-                displayedImage.Source = currentBitmap;
+                MessageBox.Show("Nie załadowano obrazu");
+                return;
             }
         }
 
         private void Erosion_Click(object sender, RoutedEventArgs e)
         {
-            if (currentBitmap == null) { return; }
-            int width = currentBitmap.PixelWidth;
-            int height = currentBitmap.PixelHeight;
-            var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-
-            var pixels = new byte[width * height * 3];
-            currentBitmap.CopyPixels(pixels, width * 3, 0);
-            for (int i = 0; i < 3 * width * height;)
+            if (currentBitmap != null)
             {
-                var r = (int)pixels[i];
-                var g = (int)pixels[i + 1];
-                var b = (int)pixels[i + 2];
+                var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
+                var pixels = GetPixels();
 
-                var gray = (r + g + b) / 3;
-
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-
+                var newPixels = PerformErosion(pixels, width, height); ;
+                if (newPixels != null)
+                {
+                    newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
+                    if (IsChangeOriginal)
+                        currentBitmap = newBitmap;
+                    displayedImage.Source = newBitmap;
+                }
             }
-            var newPixels = PerformErosion(pixels, width, height); ;
-            if (newPixels != null)
+            else
             {
-
-                newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
-                currentBitmap = newBitmap;
-                displayedImage.Source = currentBitmap;
+                MessageBox.Show("Nie załadowano obrazu");
+                return;
             }
         }
 
         private void HitOrMiss_Click(object sender, RoutedEventArgs e)
         {
-            if (currentBitmap == null) { return; }
-            int width = currentBitmap.PixelWidth;
-            int height = currentBitmap.PixelHeight;
-            var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-            var pixels = new byte[width * height * 3];
-
-            currentBitmap.CopyPixels(pixels, width * 3, 0);
-
-            for (int i = 0; i < 3 * width * height;)
+            if (currentBitmap != null)
             {
-                var r = (int)pixels[i];
-                var g = (int)pixels[i + 1];
-                var b = (int)pixels[i + 2];
+                var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
+                var pixels = GetPixels();
 
-                var gray = (r + g + b) / 3;
-
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-
+                var newPixels = PerformHitOrMiss(pixels, width, height);
+                if (newPixels != null)
+                {
+                    newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
+                    if (IsChangeOriginal)
+                        currentBitmap = newBitmap;
+                    displayedImage.Source = newBitmap;
+                }
             }
-
-            var newPixels = PerformHitOrMiss(pixels, width, height);
-            if (newPixels != null)
+            else
             {
-                newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
-                currentBitmap = newBitmap;
-                displayedImage.Source = newBitmap;
+                MessageBox.Show("Nie załadowano obrazu");
+                return;
             }
 
         }
         private void Thinning_Click(object sender, RoutedEventArgs e)
         {
-            if (currentBitmap == null) { return; }
-            int width = currentBitmap.PixelWidth;
-            int height = currentBitmap.PixelHeight;
-            var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-            var pixels = new byte[width * height * 3];
-
-            currentBitmap.CopyPixels(pixels, width * 3, 0);
-
-            for (int i = 0; i < 3 * width * height;)
+            if (currentBitmap != null)
             {
-                var r = (int)pixels[i];
-                var g = (int)pixels[i + 1];
-                var b = (int)pixels[i + 2];
+                var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
+                var pixels = GetPixels();
 
-                var gray = (r + g + b) / 3;
-
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-
-            }
-
-
-
-            var hitOrMiss = PerformHitOrMiss(pixels, width, height);
-            if (hitOrMiss != null)
-            {
-                var newPixels = new byte[width * height * 3];
-                for (int i = 0; i < 3 * width * height;)
+                var hitOrMiss = PerformHitOrMiss(pixels, width, height);
+                if (hitOrMiss != null)
                 {
-                    var hitOrMissPixel = (int)hitOrMiss[i];
-                    var basePixel = (int)pixels[i];
+                    var newPixels = new byte[width * height * 3];
+                    for (int i = 0; i < 3 * width * height;)
+                    {
+                        var hitOrMissPixel = (int)hitOrMiss[i];
+                        var basePixel = (int)pixels[i];
 
-                    newPixels[i++] = basePixel - hitOrMissPixel > 255 ? (byte)255 : basePixel - hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel - hitOrMissPixel);
-                    newPixels[i++] = basePixel - hitOrMissPixel > 255 ? (byte)255 : basePixel - hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel - hitOrMissPixel);
-                    newPixels[i++] = basePixel - hitOrMissPixel > 255 ? (byte)255 : basePixel - hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel - hitOrMissPixel);
+                        newPixels[i++] = basePixel - hitOrMissPixel > 255 ? (byte)255 : basePixel - hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel - hitOrMissPixel);
+                        newPixels[i++] = basePixel - hitOrMissPixel > 255 ? (byte)255 : basePixel - hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel - hitOrMissPixel);
+                        newPixels[i++] = basePixel - hitOrMissPixel > 255 ? (byte)255 : basePixel - hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel - hitOrMissPixel);
 
+                    }
+
+                    newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
+                    if (IsChangeOriginal)
+                        currentBitmap = newBitmap;
+                    displayedImage.Source = newBitmap;
                 }
-
-                newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
-                currentBitmap = newBitmap;
-                displayedImage.Source = newBitmap;
+                else
+                {
+                    MessageBox.Show("Nie podano maski");
+                    return;
+                }
+            }
+            else
+            {
+                MessageBox.Show("Nie załadowano obrazu");
+                return;
             }
         }
 
         private void Thickening_Click(object sender, RoutedEventArgs e)
         {
-            if (currentBitmap == null) { return; }
-            int width = currentBitmap.PixelWidth;
-            int height = currentBitmap.PixelHeight;
-            var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-            var pixels = new byte[width * height * 3];
-
-            currentBitmap.CopyPixels(pixels, width * 3, 0);
-
-            for (int i = 0; i < 3 * width * height;)
+            if (currentBitmap != null)
             {
-                var r = (int)pixels[i];
-                var g = (int)pixels[i + 1];
-                var b = (int)pixels[i + 2];
+                var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
+                var pixels = GetPixels();
 
-                var gray = (r + g + b) / 3;
-
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-
-            }
-
-
-
-            var hitOrMiss = PerformHitOrMiss(pixels, width, height);
-            if (hitOrMiss != null)
-            {
-                var newPixels = new byte[width * height * 3];
-                for (int i = 0; i < 3 * width * height;)
+                var hitOrMiss = PerformHitOrMiss(pixels, width, height);
+                if (hitOrMiss != null)
                 {
-                    var hitOrMissPixel = (int)hitOrMiss[i];
-                    var basePixel = (int)pixels[i];
+                    var newPixels = new byte[width * height * 3];
+                    for (int i = 0; i < 3 * width * height;)
+                    {
+                        var hitOrMissPixel = (int)hitOrMiss[i];
+                        var basePixel = (int)pixels[i];
 
-                    newPixels[i++] = basePixel + hitOrMissPixel > 255 ? (byte)255 : basePixel + hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel + hitOrMissPixel);
-                    newPixels[i++] = basePixel + hitOrMissPixel > 255 ? (byte)255 : basePixel + hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel + hitOrMissPixel);
-                    newPixels[i++] = basePixel + hitOrMissPixel > 255 ? (byte)255 : basePixel + hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel + hitOrMissPixel);
+                        newPixels[i++] = basePixel + hitOrMissPixel > 255 ? (byte)255 : basePixel + hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel + hitOrMissPixel);
+                        newPixels[i++] = basePixel + hitOrMissPixel > 255 ? (byte)255 : basePixel + hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel + hitOrMissPixel);
+                        newPixels[i++] = basePixel + hitOrMissPixel > 255 ? (byte)255 : basePixel + hitOrMissPixel < 0 ? (byte)0 : (byte)(basePixel + hitOrMissPixel);
 
+                    }
+                    newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
+                    if (IsChangeOriginal)
+                        currentBitmap = newBitmap;
+                    displayedImage.Source = newBitmap;
                 }
-
-                newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
-                currentBitmap = newBitmap;
-                displayedImage.Source = newBitmap;
+                else
+                {
+                    MessageBox.Show("Nie podano maski");
+                    return;
+                }
+            }
+            else
+            {
+                MessageBox.Show("Nie załadowano obrazu");
+                return;
             }
         }
-        private void Closing_Click(object sender, RoutedEventArgs e)
-        {
-            if (currentBitmap == null) { return; }
-            int width = currentBitmap.PixelWidth;
-            int height = currentBitmap.PixelHeight;
-            var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-
-            var pixels = new byte[width * height * 3];
-            currentBitmap.CopyPixels(pixels, width * 3, 0);
-            for (int i = 0; i < 3 * width * height;)
-            {
-                var r = (int)pixels[i];
-                var g = (int)pixels[i + 1];
-                var b = (int)pixels[i + 2];
-
-                var gray = (r + g + b) / 3;
-
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-
-            }
-            var dilatedPixels = PerformDilatation(pixels, width, height);
-            if (dilatedPixels != null)
-            {
-
-                var newPixels = PerformErosion(dilatedPixels, width, height);
-
-                newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
-                currentBitmap = newBitmap;
-                displayedImage.Source = currentBitmap;
-            }
-        }
-
         private void Opening_Click(object sender, RoutedEventArgs e)
         {
-            if (currentBitmap == null) { return; }
-            int width = currentBitmap.PixelWidth;
-            int height = currentBitmap.PixelHeight;
-            var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
-
-            var pixels = new byte[width * height * 3];
-            currentBitmap.CopyPixels(pixels, width * 3, 0);
-            for (int i = 0; i < 3 * width * height;)
+            if (currentBitmap != null)
             {
-                var r = (int)pixels[i];
-                var g = (int)pixels[i + 1];
-                var b = (int)pixels[i + 2];
+                var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
+                var pixels = GetPixels();
 
-                var gray = (r + g + b) / 3;
-
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
-
+                var erodedPixels = PerformErosion(pixels, width, height);
+                if (erodedPixels != null)
+                {
+                    var newPixels = PerformDilatation(erodedPixels, width, height);
+                    newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
+                    if (IsChangeOriginal)
+                        currentBitmap = newBitmap; ;
+                    displayedImage.Source = newBitmap;
+                }
             }
-            var erodedPixels = PerformErosion(pixels, width, height);
-            if (erodedPixels != null)
+            else
             {
-                var newPixels = PerformDilatation(erodedPixels, width, height);
-
-                newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
-                currentBitmap = newBitmap;
-                displayedImage.Source = currentBitmap;
+                MessageBox.Show("Nie załadowano obrazu");
+                return;
             }
         }
+
+        private void Closing_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentBitmap != null)
+            {
+                var newBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
+                var pixels = GetPixels();
+
+                var dilatedPixels = PerformDilatation(pixels, width, height);
+                if (dilatedPixels != null)
+                {
+                    var newPixels = PerformErosion(dilatedPixels, width, height);
+                    newBitmap.WritePixels(new Int32Rect(0, 0, width, height), newPixels, width * 3, 0);
+                    if (IsChangeOriginal)
+                        currentBitmap = newBitmap;
+                    displayedImage.Source = newBitmap;
+                }
+            }
+            else
+            {
+                MessageBox.Show("Nie załadowano obrazu");
+                return;
+            }
+        }
+
 
         private byte[] PerformDilatation(byte[] pixels, int width, int height)
         {
             var newPixels = new byte[width * height * 3];
             var mask = ParseMask();
-            if (mask == null) { return null; }
-            int offset = ((mask.GetLength(0) - 1) / 2);
-            for (int y = 0; y < height; y++)
+            if (mask != null)
             {
-                for (int x = 0; x < width; x++)
+                int offset = ((mask.GetLength(0) - 1) / 2);
+                for (int y = 0; y < height; y++)
                 {
-                    int index = (y * width + x) * 3;
-                    byte maxR = 0, maxG = 0, maxB = 0;
-                    for (int offsetY = -offset; offsetY <= offset; offsetY++)
+                    for (int x = 0; x < width; x++)
                     {
-                        for (int offsetX = -offset; offsetX <= offset; offsetX++)
+                        int index = (y * width + x) * 3;
+                        byte maxR = 0, maxG = 0, maxB = 0;
+                        for (int offsetY = -offset; offsetY <= offset; offsetY++)
                         {
-                            int pixelY = y + offsetY;
-                            int pixelX = x + offsetX;
-
-                            if (pixelY >= 0 && pixelX >= 0 && pixelX < width && pixelY < height)
+                            for (int offsetX = -offset; offsetX <= offset; offsetX++)
                             {
-                                int currentIndex = (pixelY * width + pixelX) * 3;
-                                if (mask[offsetY + offset, offsetX + offset] == 1)
+                                int pixelY = y + offsetY;
+                                int pixelX = x + offsetX;
+
+                                if (pixelY >= 0 && pixelX >= 0 && pixelX < width && pixelY < height)
                                 {
-                                    maxR = Math.Max(maxR, pixels[currentIndex]);
-                                    maxG = Math.Max(maxG, pixels[currentIndex + 1]);
-                                    maxB = Math.Max(maxB, pixels[currentIndex + 2]);
+                                    int currentIndex = (pixelY * width + pixelX) * 3;
+                                    if (mask[offsetY + offset, offsetX + offset] == 1)
+                                    {
+                                        maxR = Math.Max(maxR, pixels[currentIndex]);
+                                        maxG = Math.Max(maxG, pixels[currentIndex + 1]);
+                                        maxB = Math.Max(maxB, pixels[currentIndex + 2]);
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    newPixels[index] = maxR;
-                    newPixels[index + 1] = maxG;
-                    newPixels[index + 2] = maxB;
+                        newPixels[index] = maxR;
+                        newPixels[index + 1] = maxG;
+                        newPixels[index + 2] = maxB;
+                    }
                 }
+                return newPixels;
             }
-            return newPixels;
+            else
+            {
+                MessageBox.Show("Nie podano maski");
+                return null;
+            }
         }
         private byte[] PerformErosion(byte[] pixels, int width, int height)
         {
             var newPixels = new byte[width * height * 3];
             var mask = ParseMask();
-            if (mask == null) { return null; }
-            int offset = ((mask.GetLength(0) - 1) / 2);
-            for (int y = 0; y < height; y++)
+            if (mask != null)
             {
-                for (int x = 0; x < width; x++)
-                {
-                    int index = (y * width + x) * 3;
-                    byte maxR = 255, maxG = 255, maxB = 255;
-                    for (int offsetY = -offset; offsetY <= offset; offsetY++)
-                    {
-                        for (int offsetX = -offset; offsetX <= offset; offsetX++)
-                        {
-                            int pixelY = y + offsetY;
-                            int pixelX = x + offsetX;
 
-                            if (pixelY >= 0 && pixelX >= 0 && pixelX < width && pixelY < height)
+                int offset = ((mask.GetLength(0) - 1) / 2);
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        int index = (y * width + x) * 3;
+                        byte minR = 255, minG = 255, minB = 255;
+                        for (int offsetY = -offset; offsetY <= offset; offsetY++)
+                        {
+                            for (int offsetX = -offset; offsetX <= offset; offsetX++)
                             {
-                                int currentIndex = (pixelY * width + pixelX) * 3;
-                                if (mask[offsetY + offset, offsetX + offset] == 1)
+                                int pixelY = y + offsetY;
+                                int pixelX = x + offsetX;
+
+                                if (pixelY >= 0 && pixelX >= 0 && pixelX < width && pixelY < height)
                                 {
-                                    maxR = Math.Min(maxR, pixels[currentIndex]);
-                                    maxG = Math.Min(maxG, pixels[currentIndex + 1]);
-                                    maxB = Math.Min(maxB, pixels[currentIndex + 2]);
+                                    int currentIndex = (pixelY * width + pixelX) * 3;
+                                    if (mask[offsetY + offset, offsetX + offset] == 1)
+                                    {
+                                        minR = Math.Min(minR, pixels[currentIndex]);
+                                        minG = Math.Min(minG, pixels[currentIndex + 1]);
+                                        minB = Math.Min(minB, pixels[currentIndex + 2]);
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    newPixels[index] = maxR;
-                    newPixels[index + 1] = maxG;
-                    newPixels[index + 2] = maxB;
+                        newPixels[index] = minR;
+                        newPixels[index + 1] = minG;
+                        newPixels[index + 2] = minB;
+                    }
                 }
+                return newPixels;
             }
-            return newPixels;
+            else
+            {
+                MessageBox.Show("Nie podano maski");
+                return null;
+            }
         }
         private byte[] PerformHitOrMiss(byte[] pixels, int width, int height)
         {
@@ -464,7 +419,7 @@ namespace Grafika.Views
                     for (int x = 0; x < width; x++)
                     {
                         int index = (y * width + x) * 3;
-                        bool hitCaptured = true;
+                        bool HitAndMiss = true;
                         for (int offsetY = -offset; offsetY <= offset; offsetY++)
                         {
                             for (int offsetX = -offset; offsetX <= offset; offsetX++)
@@ -477,27 +432,54 @@ namespace Grafika.Views
                                     int currentIndex = (pixelY * width + pixelX) * 3;
                                     if (hitMask[offsetY + offset, offsetX + offset] == 1 && pixels[currentIndex] != 255)
                                     {
-                                        hitCaptured = false;
+                                        HitAndMiss = false;
                                         break;
                                     }
                                     else if (missMask[offsetY + offset, offsetX + offset] == 1 && pixels[currentIndex] != 0)
                                     {
-                                        hitCaptured = false;
+                                        HitAndMiss = false;
                                         break;
                                     }
                                 }
                             }
                         }
 
-                        newPixels[index] = hitCaptured ? (byte)255 : (byte)0;
-                        newPixels[index + 1] = hitCaptured ? (byte)255 : (byte)0;
-                        newPixels[index + 2] = hitCaptured ? (byte)255 : (byte)0;
+                        newPixels[index] = HitAndMiss ? (byte)255 : (byte)0;
+                        newPixels[index + 1] = HitAndMiss ? (byte)255 : (byte)0;
+                        newPixels[index + 2] = HitAndMiss ? (byte)255 : (byte)0;
                     }
                 }
-                return newPixels; 
+                return newPixels;
             }
-            return null;
+            else
+            {
+                MessageBox.Show("Nie podano maski");
+                return null;
+            }
         }
+
+        private byte[] GetPixels()
+        {
+            int width = currentBitmap.PixelWidth;
+            int height = currentBitmap.PixelHeight;
+            var pixels = new byte[width * height * 3];
+            currentBitmap.CopyPixels(pixels, width * 3, 0);
+            for (int i = 0; i < 3 * width * height;)
+            {
+                var r = (int)pixels[i];
+                var g = (int)pixels[i + 1];
+                var b = (int)pixels[i + 2];
+
+                var gray = (r + g + b) / 3;
+
+                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
+                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
+                pixels[i++] = gray > 128 ? (byte)255 : (byte)0;
+
+            }
+            return pixels;
+        }
+
         private int[,] ParseMask()
         {
             string[] mask = StructuringElementSize.Text.Split(' ');
@@ -506,7 +488,7 @@ namespace Grafika.Views
             var tmpSize = Math.Sqrt(mask.Length);
             if (tmpSize % 1 != 0 || tmpSize % 2 == 0 || tmpSize < 3)
             {
-                MessageBox.Show($"Invalid number of structural elements, minimum 9 elements.\n You passed {mask.Length}");
+                MessageBox.Show($"Nieprawidłowa liczba elementów konstrukcyjnych, podaj minimum 9 elementów.\n Podano {mask.Length}");
                 return null;
             }
 
@@ -517,7 +499,7 @@ namespace Grafika.Views
                 var parsingResult = int.TryParse(val, out kernel[row, col]);
                 if (!parsingResult || kernel[row, col] > 2 || kernel[row, col] < 0)
                 {
-                    MessageBox.Show($"Invalid input in mask: {val}");
+                    MessageBox.Show($"Nieprawidłowe dane wejściowe maski: {val}");
                     return null;
                 }
                 row++;

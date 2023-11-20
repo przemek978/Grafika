@@ -31,16 +31,18 @@
             <Button Grid.Column="0" Grid.ColumnSpan="2" x:Name="LoadImage" Content="Wczytaj obraz" Margin="5,10,5,5" Click="LoadImage_Click"/>
             <!--<Button x:Name="ReloadImmage" Content="Reload Image" Margin="5,10,5,5" Click="ReloadImmage_Click"/>-->
 
-            <TextBlock Text="Rozmiar:" Margin="5,5,5,5" Grid.Row="1" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            <TextBox Name="StructuringElementSize" Text="1" Margin="5,5,5,5" Grid.Row="1" Grid.Column="1"/>
+            <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
+                <TextBlock Text="Maska:" Margin="5,5,5,5" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" FontWeight="Bold"/>
+                <TextBox Name="StructuringElementSize" Text="0 1 0 1 1 1 0 1 0" Margin="5,5,5,5"/>
+            </StackPanel>
 
             <Button Grid.Row="2" Grid.Column="0" x:Name="Dilatation" Content="Dylatacja" Click="Dilatation_Click"/>
             <Button Grid.Row="2" Grid.Column="1" x:Name="Erosion" Content="Erozja" Click="Erosion_Click"/>
             <Button Grid.Row="3" Grid.Column="0" x:Name="Opening" Content="Otwarcie" Click="Opening_Click"/>
             <Button Grid.Row="3" Grid.Column="1" x:Name="Closing" Content="Domknięcie" Click="Closing_Click"/>
-            <Button Grid.Row="4" Grid.Column="0" x:Name="HitOrMiss" Content="Hit-or-miss" Click="HitOrMiss_Click"/>
-            <Button Grid.Row="4" Grid.Column="1" x:Name="Thinning" Content="Thinning"  Click="Thinning_Click"/>
-            <Button Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" x:Name="Thickening" Content="Thickening" Click="Thickening_Click"/>
+            <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" x:Name="HitOrMiss" Content="Hit-or-miss" Click="HitOrMiss_Click"/>
+            <Button Grid.Row="5" Grid.Column="1" x:Name="Thinning" Content="Thinning"  Click="Thinning_Click"/>
+            <Button Grid.Row="5" Grid.Column="0" x:Name="Thickening" Content="Thickening" Click="Thickening_Click"/>
 
         </Grid>
     </Grid>

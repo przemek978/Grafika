@@ -25,7 +25,7 @@
         <Button Grid.Row="2" Content="Barwy" Click="Colors_Click"/>
         <Button Grid.Row="2" Grid.Column="1" Content="Operatory" Click="Operators_Click"/>
         <Button Grid.Row="3" Content="Przekształcenia" Click="Transform_Click"/>
-        <Button Grid.Row="3" Grid.Column="1" Content="Analiza obrazów" Click="Analysis_Click" Visibility="Hidden"/>
+        <Button Grid.Row="3" Grid.Column="1" Content="Analiza obrazów" Click="Analysis_Click"/>
         <Button Grid.Row="4" Content="Histogram i Binaryzacja" Click="HistBin_Click"/>
 
     </Grid>

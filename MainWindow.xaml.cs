@@ -85,7 +85,9 @@ namespace Grafika
 
         private void Analysis_Click(object sender, RoutedEventArgs e)
         {
-
+            Analysis analysis = new Analysis();
+            analysis.Show();
+            this.Hide();
         }
     }
 }

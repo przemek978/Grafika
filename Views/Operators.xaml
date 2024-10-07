@@ -40,9 +40,9 @@
             <Button Grid.Row="2" Grid.Column="1" x:Name="Erosion" Content="Erozja" Click="Erosion_Click"/>
             <Button Grid.Row="3" Grid.Column="0" x:Name="Opening" Content="Otwarcie" Click="Opening_Click"/>
             <Button Grid.Row="3" Grid.Column="1" x:Name="Closing" Content="Domknięcie" Click="Closing_Click"/>
-            <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" x:Name="HitOrMiss" Content="Hit-or-miss" Click="HitOrMiss_Click"/>
-            <Button Grid.Row="5" Grid.Column="1" x:Name="Thinning" Content="Thinning"  Click="Thinning_Click"/>
-            <Button Grid.Row="5" Grid.Column="0" x:Name="Thickening" Content="Thickening" Click="Thickening_Click"/>
+            <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" x:Name="HitOrMiss" Content="Hit Or Miss" Click="HitOrMiss_Click"/>
+            <Button Grid.Row="5" Grid.Column="1" x:Name="Thinning" Content="Pocienianie"  Click="Thinning_Click"/>
+            <Button Grid.Row="5" Grid.Column="0" x:Name="Thickening" Content="Pogrubianie" Click="Thickening_Click"/>
 
         </Grid>
     </Grid>

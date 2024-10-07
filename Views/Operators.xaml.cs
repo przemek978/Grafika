@@ -21,15 +21,12 @@ namespace Grafika.Views
     /// </summary>
     public partial class Operators : Window
     {
-        //private Point origin;
-        //private Point start;
         private WriteableBitmap currentBitmap;
         private WriteableBitmap snapshot;
         private BitmapImage originalImage;
         private bool IsChangeOriginal = false;
         int width;
         int height;
-        //private string fileName;
 
         public Operators()
         {
@@ -79,13 +76,10 @@ namespace Grafika.Views
                 var stride = Width * bytesPerPixel;
 
                 byte[] pixelData = new byte[Height * stride];
-                // byte[] pixels = new byte[bpp * width * height];
 
                 originalImage.CopyPixels(pixelData, stride, 0);
-                //originalImage.CopyPixels(new Int32Rect(0, 0, Width, Height), pixelData, 3 * Width, 0);
                 var Pixels = pixelData;
 
-                //currentBitmap = new WriteableBitmap(originalImage);
                 currentBitmap = new WriteableBitmap(Width, Height, 96, 96, PixelFormats.Rgb24, null);
                 currentBitmap.WritePixels(new Int32Rect(0, 0, Width, Height), pixelData, 3 * Width, 0);
 
@@ -99,14 +93,6 @@ namespace Grafika.Views
                 MessageBox.Show("Błąd podczas wczytywania pliku JPEG: " + ex.Message);
             }
         }
-
-        //private void Input_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        //{
-        //    if (!int.TryParse(e.Text, out var result))
-        //    {
-        //        e.Handled = true;
-        //    }
-        //}
 
         private void Dilatation_Click(object sender, RoutedEventArgs e)
         {
@@ -177,6 +163,7 @@ namespace Grafika.Views
             }
 
         }
+
         private void Thinning_Click(object sender, RoutedEventArgs e)
         {
             if (currentBitmap != null)
@@ -255,6 +242,7 @@ namespace Grafika.Views
                 return;
             }
         }
+
         private void Opening_Click(object sender, RoutedEventArgs e)
         {
             if (currentBitmap != null)
@@ -303,7 +291,6 @@ namespace Grafika.Views
             }
         }
 
-
         private byte[] PerformDilatation(byte[] pixels, int width, int height)
         {
             var newPixels = new byte[width * height * 3];
@@ -350,6 +337,7 @@ namespace Grafika.Views
                 return null;
             }
         }
+
         private byte[] PerformErosion(byte[] pixels, int width, int height)
         {
             var newPixels = new byte[width * height * 3];
@@ -397,6 +385,7 @@ namespace Grafika.Views
                 return null;
             }
         }
+
         private byte[] PerformHitOrMiss(byte[] pixels, int width, int height)
         {
             var newPixels = new byte[width * height * 3];
